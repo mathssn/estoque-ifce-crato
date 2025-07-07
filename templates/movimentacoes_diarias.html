@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>Movimentações - <form id="formData" action="/movimentacoes/diarias"><input type="date" id="date" name="date" value="{{ data }}"></form></h1>
+
+<div class="modal fade" id="addSaidaModal" tabindex="-1" aria-labelledby="addSaidaModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+    <form action="/cadastro/saida" method="POST">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="addSaidaModalLabel">Adicionar saida</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+            <div class="mb-3">
+                <label for="produto_id" class="form-label">Produto</label>
+                <select id="produto_id" name="produto_id" class="form-select">
+                    {% for produto_id, produto in produtos.items() %}
+                        <option value="{{ produto_id }}">{{ produto.nome }}</option>
+                    {% else %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="destino" class="form-label">Destino</label>
+                <select id="destino" name="destino" class="form-select">
+                    {% for destino in ['Café da manhã', 'Lanche da manhã', 'Almoço', 'Lanche da tarde', 'Jantar', 'Ceia', 'Outros'] %}
+                        <option value="{{ destino }}">{{ destino }}</option>
+                    {% else %}
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="data" class="form-label">Data</label>
+                <input id="data" name="data" type="date" class="form-control" value="{{ data }}">
+            </div>
+            
+            <div class="mb-3">
+                <label for="quantidade" class="form-label">Quantidade</label>
+                <input id="quantidade" name="quantidade" type="text" class="form-control">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            <button type="submit" class="btn btn-primary">Adicionar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="kanban-board">
+{% for refeicao in saidas.keys() %}
+  <div class="kanban-column">
+    <h5 class="mb-3">{{ refeicao }}</h5>
+    {% for saida in saidas[refeicao] %}
+    <div class="card kanban-card p-2">
+      <div class="card-body" style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <p class="card-text" style="flex: 1; margin: 0;">{{ produtos[saida.produto_id].nome }} - {{ saida.quantidade }}{{ produtos[saida.produto_id].unidade }}</p>
+        <div class="botoes" style="display: flex; gap: 10px;">
+            <button type="button" class="btn btn-primary kanban-button" data-bs-toggle="modal" data-bs-target="#editSaidaModal" onclick="fillEditForm('{{saida.id}}', '{{saida.produto_id}}', '{{saida.destino}}', '{{saida.data_saida}}', '{{saida.quantidade}}')">Editar</button>
+            <form action="{{ url_for('excluir_saida', saida_id=saida.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta saida?')">
+                <button type="submit" class="btn btn-danger kanban-button">Excluir</button>
+            </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    <button class="card kanban-card p-2" type="button" data-bs-toggle="modal" data-bs-target="#addSaidaModal" onclick="document.getElementById('destino').value = '{{ refeicao }}'">
+      <div class="card-body">
+        <p class="card-text">Adicionar saida</p>
+      </div>
+    </button>
+  </div>
+{% endfor %}
+</div>
+
+
+<div class="modal fade" id="editSaidaModal" tabindex="-1" aria-labelledby="editSaidaModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+    <form id="editSaidaForm" method="POST">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="editSaidaModalLabel">Editar saida</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+            <div class="mb-3">
+                <label for="edit_produto_id" class="form-label">Produto</label>
+                <select id="edit_produto_id" name="edit_produto_id" class="form-select">
+                    {% for produto_id, produto in produtos.items() %}
+                        <option value="{{ produto_id }}">{{ produto.nome }}</option>
+                    {% else %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="edit_destino" class="form-label">Destino</label>
+                <select id="edit_destino" name="edit_destino" class="form-select">
+                    {% for destino in ['Café da manhã', 'Lanche da manhã', 'Almoço', 'Lanche da tarde', 'Jantar', 'Ceia', 'Outros'] %}
+                        <option value="{{ destino }}">{{ destino }}</option>
+                    {% else %}
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="edit_data" class="form-label">Data</label>
+                <input id="edit_data" name="edit_data" type="date" class="form-control" value="{{ data }}">
+            </div>
+            
+            <div class="mb-3">
+                <label for="edit_quantidade" class="form-label">Quantidade</label>
+                <input id="edit_quantidade" name="edit_quantidade" type="text" class="form-control">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            <button type="submit" class="btn btn-primary">Editar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 
+<h1>Estoque atual</h1>
+<ul>
+  {% for produto_id, produto in produtos.items() %}
+  <li>{{ produto.nome }} - {{ produto.quantidade_atual }}</li>
+  {% else %}
+  {% endfor %}
+</ul> -->
+
+<script>
+    const campoData = document.getElementById('date');
+
+    campoData.addEventListener('change', function() {
+        document.getElementById('formData').submit();
+    })
+
+    function fillEditForm(id, produto_id, destino, data, quantidade) {
+        document.getElementById("edit_produto_id").value = produto_id;
+        document.getElementById("edit_destino").value = destino;
+        document.getElementById("edit_data").value = data;
+        document.getElementById("edit_quantidade").value = quantidade;
+
+        document.getElementById("editSaidaForm").action = "{{ url_for('editar_saida', saida_id=0) }}".replace('0', id);
+    }
+</script>
+
+{% endblock %}
