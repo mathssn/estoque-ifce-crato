@@ -1,5 +1,6 @@
 from database.scripts.db import connect_db
 import sqlite3
+from database.scripts.utils import recalculate_entries_balance
 
 
 class Entrada:
@@ -16,15 +17,20 @@ class Entrada:
         return f"Entrada de Produto {self.produto_id} em {self.data_entrada}"
 
 
-def create(entrada: Entrada):
+def create(entrada: Entrada) -> bool:
     conn, cursor = connect_db()
 
     try:
+        sucess = recalculate_entries_balance(entrada.data_entrada, entrada)
+        if not sucess:
+            return False
         cursor.execute(
             'INSERT INTO entradas (produto_id, data_entrada, quantidade) VALUES (?, ?, ?)',
             entrada.get_tuple()
         )
+        entrada.id = cursor.lastrowid
         conn.commit()
+
     except sqlite3.Error as e:
         print(e)
         return False
@@ -34,7 +40,7 @@ def create(entrada: Entrada):
     return True
 
 
-def list_all():
+def list_all() -> list[Entrada]:
     conn, cursor = connect_db()
 
     cursor.execute('SELECT * FROM entradas ORDER BY data_entrada DESC')
@@ -49,7 +55,7 @@ def list_all():
     return entradas
 
 
-def get(_id):
+def get(_id) -> Entrada:
     conn, cursor = connect_db()
 
     cursor.execute('SELECT * FROM entradas WHERE id = ?', (_id,))
@@ -62,10 +68,14 @@ def get(_id):
     return None
 
 
-def update(_id, entrada: Entrada):
+def update(_id, entrada: Entrada) -> bool:
     conn, cursor = connect_db()
 
     try:
+        sucess = recalculate_entries_balance(entrada.data_entrada, entrada, True)
+        if not sucess:
+            return False
+        
         cursor.execute(
             'UPDATE entradas SET produto_id = ?, data_entrada = ?, quantidade = ? WHERE id = ?',
             entrada.get_tuple() + (_id,)
@@ -79,7 +89,7 @@ def update(_id, entrada: Entrada):
     return True
 
 
-def delete(_id):
+def delete(_id) -> bool:
     conn, cursor = connect_db()
 
     try:
@@ -93,7 +103,7 @@ def delete(_id):
     return True
 
 
-def list_by_date(date: str):
+def list_by_date(date: str) -> list[Entrada]:
     conn, cursor = connect_db()
 
     try:
@@ -111,7 +121,7 @@ def list_by_date(date: str):
     return entradas
 
 
-def list_by_month(month: str, year: str):
+def list_by_month(month: str, year: str) -> list[Entrada]:
     conn, cursor = connect_db()
 
     if len(month) == 1:

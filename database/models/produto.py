@@ -28,6 +28,7 @@ def create(produto: Produto):
             produto.get_tuple()
         )
         conn.commit()
+        produto.id = cursor.lastrowid
     except sqlite3.Error:
         return False
     finally:
@@ -54,6 +55,19 @@ def get(_id):
     conn, cursor = connect_db()
 
     cursor.execute('SELECT * FROM produto WHERE id = ?', (_id,))
+    row = cursor.fetchone()
+    conn.close()    
+
+    if row:
+        return Produto(*row)
+    
+    return None
+
+
+def get_by_cod(cod):
+    conn, cursor = connect_db()
+
+    cursor.execute('SELECT * FROM produto WHERE codigo = ?', (cod,))
     row = cursor.fetchone()
     conn.close()    
 

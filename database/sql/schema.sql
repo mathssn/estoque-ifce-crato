@@ -25,3 +25,18 @@ CREATE TABLE IF NOT EXISTS entradas (
     quantidade INT NOT NULL,
     FOREIGN KEY(produto_id) REFERENCES produto(id)
 );
+
+CREATE TABLE IF NOT EXISTS saldo_diario (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    produto_id INT NOT NULL,
+    data DATE NOT NULL,
+    quantidade_inicial INT NOT NULL,
+    quantidade_entrada INT NOT NULL,
+    quantidade_saida INT NOT NULL,
+    quantidade_final INT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS dias_fechados (
+    data DATE PRIMARY KEY,
+    fechado BOOLEAN NOT NULL
+);

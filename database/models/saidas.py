@@ -1,5 +1,6 @@
 from database.scripts.db import connect_db
 import sqlite3
+from database.scripts.utils import recalculate_exits_balance
 
 
 class Saida:
@@ -18,14 +19,19 @@ class Saida:
         return f"Saída de Produto {self.produto_id} para {self.destino} em {self.data_saida}"
 
 
-def create(saida: Saida):
+def create(saida: Saida) -> bool:
     conn, cursor = connect_db()
 
     try:
+        sucess = recalculate_exits_balance(saida.data_saida, saida)
+        if not sucess:
+            return False
+        
         cursor.execute(
             'INSERT INTO saidas (produto_id, destino, data_saida, quantidade) VALUES (?, ?, ?, ?)',
             saida.get_tuple()
         )
+        saida.id = cursor.lastrowid
         conn.commit()
     except sqlite3.Error as e:
         print(e)
@@ -36,7 +42,7 @@ def create(saida: Saida):
     return True
 
 
-def list_all():
+def list_all() -> list[Saida]:
     conn, cursor = connect_db()
 
     cursor.execute('SELECT * FROM saidas ORDER BY data_saida DESC')
@@ -51,7 +57,7 @@ def list_all():
     return saidas
 
 
-def get(_id):
+def get(_id) -> Saida:
     conn, cursor = connect_db()
 
     cursor.execute('SELECT * FROM saidas WHERE id = ?', (_id,))
@@ -64,10 +70,14 @@ def get(_id):
     return None
 
 
-def update(_id, saida: Saida):
+def update(_id, saida: Saida) -> bool:
     conn, cursor = connect_db()
 
     try:
+        sucess = recalculate_exits_balance(saida.data_saida, saida, True)
+        if not sucess:
+            return False
+        
         cursor.execute(
             'UPDATE saidas SET produto_id = ?, destino = ?, data_saida = ?, quantidade = ? WHERE id = ?',
             saida.get_tuple() + (_id,)
@@ -81,7 +91,7 @@ def update(_id, saida: Saida):
     return True
 
 
-def delete(_id):
+def delete(_id) -> bool:
     conn, cursor = connect_db()
 
     try:
@@ -95,7 +105,7 @@ def delete(_id):
     return True
 
 
-def list_by_date(date: str):
+def list_by_date(date: str) -> list[Saida]:
     conn, cursor = connect_db()
 
     try:
@@ -116,7 +126,7 @@ def list_by_date(date: str):
     return saidas
 
 
-def list_by_month(month: str, year: str):
+def list_by_month(month: str, year: str) -> list[Saida]:
     conn, cursor = connect_db()
 
     if len(month) == 1:
