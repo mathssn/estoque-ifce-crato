@@ -22,9 +22,7 @@ class SaldoDiario:
         self.quantidade_final = self.quantidade_inicial + self.quantidade_entrada - self.quantidade_saida
 
 
-def create(saldo: SaldoDiario):
-    conn, cursor = connect_db()
-
+def create(saldo: SaldoDiario, cursor: sqlite3.Cursor):
     try:
         cursor.execute(
             '''INSERT INTO saldo_diario (
@@ -34,42 +32,31 @@ def create(saldo: SaldoDiario):
             ) VALUES (?, ?, ?, ?, ?, ?)''',
             saldo.get_tuple()
         )
-        conn.commit()
     except sqlite3.Error as e:
         print(e)
         return False
-    finally:
-        conn.close()
 
     return True
 
 
-def list_all():
-    conn, cursor = connect_db()
-
+def list_all(cursor: sqlite3.Cursor):
     cursor.execute('SELECT * FROM saldo_diario ORDER BY data DESC')
     rows = cursor.fetchall()
     saldos = []
     for row in rows:
         saldos.append(SaldoDiario(*row))
 
-    conn.close()
     return saldos
 
 
-def get(_id):
-    conn, cursor = connect_db()
-
+def get(_id, cursor: sqlite3.Cursor):
     cursor.execute('SELECT * FROM saldo_diario WHERE id = ?', (_id,))
     row = cursor.fetchone()
-    conn.close()
 
     return SaldoDiario(*row) if row else None
 
 
-def update(_id, saldo: SaldoDiario):
-    conn, cursor = connect_db()
-
+def update(_id, saldo: SaldoDiario, cursor: sqlite3.Cursor):
     try:
         cursor.execute(
             '''UPDATE saldo_diario SET 
@@ -79,48 +66,34 @@ def update(_id, saldo: SaldoDiario):
                WHERE id = ?''',
             saldo.get_tuple() + (_id,)
         )
-        conn.commit()
     except sqlite3.Error:
         return False
-    finally:
-        conn.close()
 
     return True
 
 
-def delete(_id):
-    conn, cursor = connect_db()
-
+def delete(_id, cursor: sqlite3.Cursor):
     try:
         cursor.execute('DELETE FROM saldo_diario WHERE id = ?', (_id,))
-        conn.commit()
     except sqlite3.Error:
         return False
-    finally:
-        conn.close()
 
     return True
 
 
-def list_by_date(date: str):
-    conn, cursor = connect_db()
-
+def list_by_date(date: str, cursor: sqlite3.Cursor):
     try:
         cursor.execute('SELECT * FROM saldo_diario WHERE data = ?', (date,))
         rows = cursor.fetchall()
     except sqlite3.Error:
         return []
-    finally:
-        conn.close()
 
     return [SaldoDiario(*row) for row in rows]
 
 
-def list_by_month(month: str, year: str):
+def list_by_month(month: str, year: str, cursor: sqlite3.Cursor):
     if len(month) == 1:
         month = '0' + month
-
-    conn, cursor = connect_db()
 
     try:
         cursor.execute(
@@ -132,21 +105,15 @@ def list_by_month(month: str, year: str):
         rows = cursor.fetchall()
     except sqlite3.Error:
         return []
-    finally:
-        conn.close()
 
     return [SaldoDiario(*row) for row in rows]
 
 
-def get_by_date_and_product(date: str, produto_id: int):
-    conn, cursor = connect_db()
-
+def get_by_date_and_product(date: str, produto_id: int, cursor: sqlite3.Cursor):
     try:
         cursor.execute('SELECT * FROM saldo_diario WHERE data = ? AND produto_id = ?', (date, produto_id))
         row = cursor.fetchone()
     except sqlite3.Error:
         return None
-    finally:
-        conn.close()
 
     return SaldoDiario(*row) if row else None

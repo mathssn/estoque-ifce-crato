@@ -19,27 +19,20 @@ class Produto:
     def __str__(self):
         return self.nome
 
-def create(produto: Produto):
-    conn, cursor = connect_db()
-
+def create(produto: Produto, cursor: sqlite3.Cursor):
     try:
         cursor.execute(
             'INSERT INTO produto (codigo, nome, descricao, unidade, quantidade_minima, status) VALUES (?, ?, ?, ?, ?, ?)',
             produto.get_tuple()
         )
-        conn.commit()
         produto.id = cursor.lastrowid
     except sqlite3.Error:
         return False
-    finally:
-        conn.close()
 
     return True
 
 
-def list_all():
-    conn, cursor = connect_db()
-
+def list_all(cursor: sqlite3.Cursor):
     cursor.execute('SELECT * FROM produto ORDER BY codigo')
     rows = cursor.fetchall()
     produtos: list[Produto] = []
@@ -47,16 +40,12 @@ def list_all():
     for row in rows:
         produtos.append(Produto(*row))
 
-    conn.close()    
     return produtos
 
 
-def get(_id):
-    conn, cursor = connect_db()
-
+def get(_id, cursor: sqlite3.Cursor):
     cursor.execute('SELECT * FROM produto WHERE id = ?', (_id,))
     row = cursor.fetchone()
-    conn.close()    
 
     if row:
         return Produto(*row)
@@ -64,12 +53,9 @@ def get(_id):
     return None
 
 
-def get_by_cod(cod):
-    conn, cursor = connect_db()
-
+def get_by_cod(cod, cursor: sqlite3.Cursor):
     cursor.execute('SELECT * FROM produto WHERE codigo = ?', (cod,))
     row = cursor.fetchone()
-    conn.close()    
 
     if row:
         return Produto(*row)
@@ -77,34 +63,24 @@ def get_by_cod(cod):
     return None
 
 
-def update(_id, produto: Produto):
-    conn, cursor = connect_db()
-
+def update(_id, produto: Produto, cursor: sqlite3.Cursor):
     try:
         cursor.execute(
             'UPDATE produto SET codigo = ?, nome = ?, descricao = ?, unidade = ?, quantidade_minima = ?, status = ? WHERE id = ?',
             produto.get_tuple() + (_id,)
         )
-        conn.commit()
     except sqlite3.Error:
         return False
-    finally:
-        conn.close()
 
     return True
 
-def delete(_id):
-    conn, cursor = connect_db()
-
+def delete(_id, cursor: sqlite3.Cursor):
     try:
         cursor.execute(
             'DELETE FROM produto WHERE id = ?',
             (_id,)
         )
-        conn.commit()
     except sqlite3.Error:
         return False
-    finally:
-        conn.close()
 
     return True

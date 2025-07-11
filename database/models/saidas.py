@@ -19,11 +19,9 @@ class Saida:
         return f"Saída de Produto {self.produto_id} para {self.destino} em {self.data_saida}"
 
 
-def create(saida: Saida) -> bool:
-    conn, cursor = connect_db()
-
+def create(saida: Saida, cursor: sqlite3.Cursor) -> bool:
     try:
-        sucess = recalculate_exits_balance(saida.data_saida, saida)
+        sucess = recalculate_exits_balance(saida.data_saida, saida, cursor)
         if not sucess:
             return False
         
@@ -32,19 +30,14 @@ def create(saida: Saida) -> bool:
             saida.get_tuple()
         )
         saida.id = cursor.lastrowid
-        conn.commit()
     except sqlite3.Error as e:
         print(e)
         return False
-    finally:
-        conn.close()
 
     return True
 
 
-def list_all() -> list[Saida]:
-    conn, cursor = connect_db()
-
+def list_all(cursor: sqlite3.Cursor) -> list[Saida]:
     cursor.execute('SELECT * FROM saidas ORDER BY data_saida DESC')
     rows = cursor.fetchall()
     saidas: list[Saida] = []
@@ -53,16 +46,12 @@ def list_all() -> list[Saida]:
         saida = Saida(*row)
         saidas.append(saida)
 
-    conn.close()
     return saidas
 
 
-def get(_id) -> Saida:
-    conn, cursor = connect_db()
-
+def get(_id, cursor: sqlite3.Cursor) -> Saida:
     cursor.execute('SELECT * FROM saidas WHERE id = ?', (_id,))
     row = cursor.fetchone()
-    conn.close()
 
     if row:
         return Saida(*row)
@@ -70,11 +59,9 @@ def get(_id) -> Saida:
     return None
 
 
-def update(_id, saida: Saida) -> bool:
-    conn, cursor = connect_db()
-
+def update(_id, saida: Saida, cursor: sqlite3.Cursor) -> bool:
     try:
-        sucess = recalculate_exits_balance(saida.data_saida, saida, True)
+        sucess = recalculate_exits_balance(saida.data_saida, saida, cursor, True)
         if not sucess:
             return False
         
@@ -82,32 +69,22 @@ def update(_id, saida: Saida) -> bool:
             'UPDATE saidas SET produto_id = ?, destino = ?, data_saida = ?, quantidade = ? WHERE id = ?',
             saida.get_tuple() + (_id,)
         )
-        conn.commit()
     except sqlite3.Error:
         return False
-    finally:
-        conn.close()
 
     return True
 
 
-def delete(_id) -> bool:
-    conn, cursor = connect_db()
-
+def delete(_id, cursor: sqlite3.Cursor) -> bool:
     try:
         cursor.execute('DELETE FROM saidas WHERE id = ?', (_id,))
-        conn.commit()
     except sqlite3.Error:
         return False
-    finally:
-        conn.close()
 
     return True
 
 
-def list_by_date(date: str) -> list[Saida]:
-    conn, cursor = connect_db()
-
+def list_by_date(date: str, cursor: sqlite3.Cursor) -> list[Saida]:
     try:
         cursor.execute(
             'SELECT * FROM saidas WHERE data_saida = ?',
@@ -116,8 +93,6 @@ def list_by_date(date: str) -> list[Saida]:
         rows = cursor.fetchall()
     except sqlite3.Error as e:
         return []
-    finally:
-        conn.close()
 
     saidas = []
     for row in rows:
@@ -126,9 +101,7 @@ def list_by_date(date: str) -> list[Saida]:
     return saidas
 
 
-def list_by_month(month: str, year: str) -> list[Saida]:
-    conn, cursor = connect_db()
-
+def list_by_month(month: str, year: str, cursor: sqlite3.Cursor) -> list[Saida]:
     if len(month) == 1:
         month = '0' + month
 
@@ -140,8 +113,6 @@ def list_by_month(month: str, year: str) -> list[Saida]:
         rows = cursor.fetchall()
     except sqlite3.Error as e:
         return []
-    finally:
-        conn.close()
 
     saidas = []
     for row in rows:

@@ -9,7 +9,7 @@
 <div class="modal fade" id="cadastroProdutoModal" tabindex="-1" aria-labelledby="cadastroProdutoModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-    <form action="/cadastro/produtos/" method="POST">
+    <form action="{{ url_for('produtos.cadastro_produtos') }}" method="POST">
       <div class="modal-header">
         <h1 class="modal-title fs-5" id="cadastroProdutoModalLabel">Cadastrar Produto</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -163,7 +163,7 @@
         document.getElementById("edit_quantidade_minima").value = quantidade_minima;
         document.getElementById("edit_status").value = status;
 
-        document.getElementById("editProdutoForm").action = "{{ url_for('editar_produto', produto_id=0) }}".replace('0', id);
+        document.getElementById("editProdutoForm").action = "{{ url_for('produtos.editar_produto', produto_id=0) }}".replace('0', id);
     }
 </script>
 
