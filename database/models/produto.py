@@ -1,17 +1,16 @@
-from database.scripts.db import connect_db
 import sqlite3
+from dataclasses import dataclass
 
 
+@dataclass
 class Produto:
-
-    def __init__(self, _id=None, codigo=None, nome=None, descricao=None, unidade=None, quantidade_minima=None, status=None):
-        self.id = _id
-        self.codigo = codigo
-        self.nome = nome
-        self.descricao = descricao
-        self.unidade = unidade
-        self.quantidade_minima = quantidade_minima
-        self.status = status
+    id: int
+    codigo: int
+    nome: str
+    descricao: str
+    unidade: str
+    quantidade_minima: int
+    status: str
 
     def get_tuple(self):
         return (self.codigo, self.nome, self.descricao, self.unidade, self.quantidade_minima, self.status)
@@ -27,13 +26,15 @@ def create(produto: Produto, cursor: sqlite3.Cursor):
         )
         produto.id = cursor.lastrowid
     except sqlite3.Error:
-        return False
-
-    return True
+        raise Exception('Erro ao cadastrar produto')
 
 
 def list_all(cursor: sqlite3.Cursor):
-    cursor.execute('SELECT * FROM produto ORDER BY codigo')
+    try:
+        cursor.execute('SELECT * FROM produto ORDER BY codigo')
+    except sqlite3.Error:
+        raise Exception('Erro ao listar produtos')
+    
     rows = cursor.fetchall()
     produtos: list[Produto] = []
 
@@ -44,23 +45,24 @@ def list_all(cursor: sqlite3.Cursor):
 
 
 def get(_id, cursor: sqlite3.Cursor):
-    cursor.execute('SELECT * FROM produto WHERE id = ?', (_id,))
+    try:
+        cursor.execute('SELECT * FROM produto WHERE id = ?', (_id,))
+    except sqlite3.Error:
+        raise Exception('Erro ao recuperar produto')
     row = cursor.fetchone()
 
-    if row:
-        return Produto(*row)
-    
-    return None
+    return Produto(*row) if row else None
 
 
 def get_by_cod(cod, cursor: sqlite3.Cursor):
-    cursor.execute('SELECT * FROM produto WHERE codigo = ?', (cod,))
+    
+    try:
+        cursor.execute('SELECT * FROM produto WHERE codigo = ?', (cod,))
+    except sqlite3.Error:
+        raise Exception('Erro ao recuperar produto')
     row = cursor.fetchone()
 
-    if row:
-        return Produto(*row)
-    
-    return None
+    return Produto(*row) if row else None
 
 
 def update(_id, produto: Produto, cursor: sqlite3.Cursor):
@@ -70,9 +72,8 @@ def update(_id, produto: Produto, cursor: sqlite3.Cursor):
             produto.get_tuple() + (_id,)
         )
     except sqlite3.Error:
-        return False
+        raise Exception('Erro ao atualizar produto')
 
-    return True
 
 def delete(_id, cursor: sqlite3.Cursor):
     try:
@@ -81,6 +82,4 @@ def delete(_id, cursor: sqlite3.Cursor):
             (_id,)
         )
     except sqlite3.Error:
-        return False
-
-    return True
+        raise Exception('Erro ao deletar produto')

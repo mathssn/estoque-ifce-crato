@@ -1,16 +1,18 @@
-from database.scripts.db import connect_db
 import sqlite3
+from dataclasses import dataclass
 
+
+@dataclass
 class DiasFechados:
-    def __init__(self, data=None, fechado=False):
-        self.data = data
-        self.fechado = fechado
+    data: str
+    fechado: bool
 
     def get_tuple(self):
         return (self.data, self.fechado)
 
     def __str__(self):
         return f"Dia {self.data} {'fechado' if self.fechado else 'aberto'}"
+
 
 def create(dia: DiasFechados, cursor: sqlite3.Cursor):
     try:
@@ -20,15 +22,16 @@ def create(dia: DiasFechados, cursor: sqlite3.Cursor):
             ) VALUES (?, ?)''',
             dia.get_tuple()
         )
-    except sqlite3.Error as e:
-        print(e)
-        return False
-
-    return True
+    except sqlite3.Error:
+        raise Exception('Erro ao cadastrar dia')
 
 
 def list_all(cursor: sqlite3.Cursor):
-    cursor.execute('SELECT * FROM dias_fechados ORDER BY data DESC')
+    try:
+        cursor.execute('SELECT * FROM dias_fechados ORDER BY data DESC')
+    except sqlite3.Error:
+        raise Exception('Erro ao listar dias')
+    
     rows = cursor.fetchall()
     dias = [DiasFechados(data=row[0], fechado=bool(row[1])) for row in rows]
 
@@ -36,7 +39,11 @@ def list_all(cursor: sqlite3.Cursor):
 
 
 def get(data, cursor: sqlite3.Cursor):
-    cursor.execute('SELECT * FROM dias_fechados WHERE data = ?', (data,))
+    try:
+        cursor.execute('SELECT * FROM dias_fechados WHERE data = ?', (data,))
+    except sqlite3.Error:
+        raise Exception('Erro ao recuperar dia')
+    
     row = cursor.fetchone()
 
     if row:
@@ -53,15 +60,12 @@ def update(data, dia: DiasFechados, cursor: sqlite3.Cursor):
             (dia.fechado, data)
         )
     except sqlite3.Error:
-        return False
-
-    return True
+        raise Exception('Erro ao atualizar dia')
 
 
 def delete(data, cursor: sqlite3.Cursor):
     try:
         cursor.execute('DELETE FROM dias_fechados WHERE data = ?', (data,))
     except sqlite3.Error:
-        return False
+        raise Exception('Erro ao deletar dia')
 
-    return True

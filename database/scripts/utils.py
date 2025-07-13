@@ -6,7 +6,7 @@ def recalculate_exits_balance(data, saida, cursor: sqlite3.Cursor, update=False,
 
     saldo = saldos.get_by_date_and_product(data, saida.produto_id, cursor)
     if not saldo:
-        return False
+        raise Exception('Não é possivel atualizar o saldo do dia')
 
     saidas_ = saidas.list_by_date(data, cursor)
     total_saidas = 0
@@ -24,12 +24,11 @@ def recalculate_exits_balance(data, saida, cursor: sqlite3.Cursor, update=False,
     
     qntd_final = saldo.quantidade_inicial + saldo.quantidade_entrada - total_saidas
     if qntd_final < 0:
-        return False
+        raise Exception('Valor inválido')
 
     saldo.quantidade_saida = total_saidas
     saldo.quantidade_final = qntd_final
     saldos.update(saldo.id, saldo, cursor)
-    return True
 
 
 def recalculate_entries_balance(data, entrada, cursor: sqlite3.Cursor, update=False, delete=False):
@@ -38,7 +37,7 @@ def recalculate_entries_balance(data, entrada, cursor: sqlite3.Cursor, update=Fa
 
     saldo = saldos.get_by_date_and_product(data, entrada.produto_id, cursor)
     if not saldo:
-        return False
+        raise Exception('Não é possivel atualizar o saldo do dia')
 
     entradas_ = entradas.list_by_date(data, cursor)
     total_entradas = 0
@@ -56,12 +55,11 @@ def recalculate_entries_balance(data, entrada, cursor: sqlite3.Cursor, update=Fa
     
     qntd_final = saldo.quantidade_inicial + total_entradas - saldo.quantidade_saida
     if qntd_final < 0:
-        return False
+        raise Exception('Valor inválido')
 
     saldo.quantidade_entrada = total_entradas
     saldo.quantidade_final = qntd_final
     saldos.update(saldo.id, saldo, cursor)
-    return True
 
 
 def check_saldo(data, cursor: sqlite3.Cursor):
