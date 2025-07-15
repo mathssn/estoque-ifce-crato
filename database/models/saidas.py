@@ -10,19 +10,21 @@ class Saida:
     destino: str
     data_saida: str
     quantidade: int
+    observacao: str
+    usuario_id: int
 
     def get_tuple(self):
-        return (self.produto_id, self.destino, self.data_saida, self.quantidade)
+        return (self.produto_id, self.destino, self.data_saida, self.quantidade, self.observacao, self.usuario_id)
 
     def __str__(self):
-        return f"Saída de Produto {self.produto_id} para {self.destino} em {self.data_saida}"
+        return f"Saída de Produto {self.produto_id} para {self.destino} em {self.data_saida} pelo usuário: {self.usuario_id}"
 
 
 def create(saida: Saida, cursor: sqlite3.Cursor):
     try:
         recalculate_exits_balance(saida.data_saida, saida, cursor)        
         cursor.execute(
-            'INSERT INTO saidas (produto_id, destino, data_saida, quantidade) VALUES (?, ?, ?, ?)',
+            'INSERT INTO saidas (produto_id, destino, data_saida, quantidade, observacao, usuario_id) VALUES (?, ?, ?, ?, ?, ?)',
             saida.get_tuple()
         )
         saida.id = cursor.lastrowid
@@ -55,7 +57,7 @@ def update(_id, saida: Saida, cursor: sqlite3.Cursor):
         recalculate_exits_balance(saida.data_saida, saida, cursor, True)
 
         cursor.execute(
-            'UPDATE saidas SET produto_id = ?, destino = ?, data_saida = ?, quantidade = ? WHERE id = ?',
+            'UPDATE saidas SET produto_id = ?, destino = ?, data_saida = ?, quantidade = ?, observacao = ?, usuario_id = ? WHERE id = ?',
             saida.get_tuple() + (_id,)
         )
     except sqlite3.Error:

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash, url_for
+from flask import Flask, render_template, request, redirect, flash, url_for, session
 from datetime import datetime, timedelta, date
 
 from database.scripts.db import *
@@ -21,12 +21,44 @@ app.register_blueprint(produtos)
 app.register_blueprint(saidas)
 app.register_blueprint(entradas)
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+    elif request.method != 'POST':
+        return redirect('/')
+    
+    email = request.form.get('email')
+    senha = request.form.get('password')
+    
+    with connect_db() as (conn, cursor):
+        cod, user = check_login(email, senha, cursor)
+        if cod == 1:
+            flash('Usuário inexistente!')
+        elif cod == 2:
+            flash('Senha incorreta!')
+        elif cod == 0:
+            session['user_id'] = user.id
+            session['nome'] = user.nome
+            session['tipo'] = user.tipo
+            flash('Usuário logado com sucesso!')
+
+    return redirect('/')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+
+    return redirect('/')
+
 @app.route('/movimentacoes/diarias/')
 @app.route('/movimentacoes/diarias/<data>')
+@login_required
 def movimentacoes_diarias(data=None):
     d = request.args.get('date')
     if d != None:
@@ -49,7 +81,12 @@ def movimentacoes_diarias(data=None):
     return render_template('movimentacoes_diarias.html', saidas=saidas_diarias, data=data, produtos=produtos_dict, entradas=entradas_diarias, saldos_diarios=saldos_diarios, dia=dia)
 
 @app.route('/fechar/dia/<data>')
+@login_required
 def fechar_dia(data: str):
+    if session['tipo'] not in ['Admin', 'Editor']:
+        flash('Permissão negada')
+        return redirect(url_for('movimentacoes_diarias'))
+
     try:
         with connect_db() as (conn, cursor):
             saldos_ = saldos.list_by_date(data, cursor)

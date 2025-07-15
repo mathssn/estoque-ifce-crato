@@ -1,4 +1,7 @@
 import sqlite3
+from flask import session, flash, redirect
+from functools import wraps
+
 
 def recalculate_exits_balance(data, saida, cursor: sqlite3.Cursor, update=False, delete=False):
     import database.models.saldo_diario as saldos
@@ -72,3 +75,25 @@ def check_saldo(data, cursor: sqlite3.Cursor):
         return False
     
     return True
+
+
+def check_login(email: str, senha: str, cursor: sqlite3.Cursor):
+    import database.models.usuario as user
+
+    usuario = user.get_by_email(email, cursor)
+    if usuario == None:
+        return 1, None
+    elif usuario.senha != senha:
+        return 2, None
+    return 0, usuario
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        print(session.items())
+        if 'nome' not in session or 'user_id' not in session:
+            flash('Você precisa estar logado para acessar essa página')
+            return redirect('/')
+        return f(*args, **kwargs)
+    return decorated_function

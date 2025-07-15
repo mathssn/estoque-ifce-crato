@@ -9,12 +9,14 @@ class Entrada:
     produto_id: int
     data_entrada: str
     quantidade: int
+    observacao: str
+    usuario_id: int
 
     def get_tuple(self):
-        return (self.produto_id, self.data_entrada, self.quantidade)
+        return (self.produto_id, self.data_entrada, self.quantidade, self.observacao, self.usuario_id)
 
     def __str__(self):
-        return f"Entrada de Produto {self.produto_id} em {self.data_entrada}"
+        return f"Entrada de Produto {self.produto_id} em {self.data_entrada} pelo usuário: {self.usuario_id}"
 
 
 def create(entrada: Entrada, cursor: sqlite3.Cursor):
@@ -22,7 +24,7 @@ def create(entrada: Entrada, cursor: sqlite3.Cursor):
         recalculate_entries_balance(entrada.data_entrada, entrada, cursor)
         
         cursor.execute(
-            'INSERT INTO entradas (produto_id, data_entrada, quantidade) VALUES (?, ?, ?)',
+            'INSERT INTO entradas (produto_id, data_entrada, quantidade, observacao, usuario_id) VALUES (?, ?, ?, ?, ?)',
             entrada.get_tuple()
         )
         entrada.id = cursor.lastrowid
@@ -56,7 +58,7 @@ def update(_id, entrada: Entrada, cursor: sqlite3.Cursor):
         recalculate_entries_balance(entrada.data_entrada, entrada, cursor, True)
         
         cursor.execute(
-            'UPDATE entradas SET produto_id = ?, data_entrada = ?, quantidade = ? WHERE id = ?',
+            'UPDATE entradas SET produto_id = ?, data_entrada = ?, quantidade = ?, observacao = ?, usuario_id = ? WHERE id = ?',
             entrada.get_tuple() + (_id,)
         )
     except sqlite3.Error:

@@ -25,4 +25,10 @@ def create_database():
             
             for comand in comands:
                 cursor.execute(comand)
+
+            with open('database/sql/insert.sql', encoding='utf-8') as file:
+                comands = file.read().split(';')
+            
+            for comand in comands:
+                cursor.execute(comand)
                 

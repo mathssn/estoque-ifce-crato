@@ -42,6 +42,11 @@
                 <label for="quantidade" class="form-label">Quantidade</label>
                 <input id="quantidade" name="quantidade" type="text" class="form-control">
             </div>
+
+            <div class="mb-3">
+              <label for="observacao" class="form-label">Observação</label>
+              <input id="observacao" name="observacao" type="text" class="form-control">
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
@@ -81,6 +86,11 @@
                 <label for="quantidade" class="form-label">Quantidade</label>
                 <input id="quantidade" name="quantidade" type="text" class="form-control">
             </div>
+
+             <div class="mb-3">
+              <label for="observacao" class="form-label">Observação</label>
+              <input id="observacao" name="observacao" type="text" class="form-control">
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
@@ -103,7 +113,7 @@
         {% if dia != None %}
           {% if dia.fechado == False %}
         <div class="botoes" style="display: flex; gap: 10px;">
-            <button type="button" class="btn btn-primary kanban-button" data-bs-toggle="modal" data-bs-target="#editSaidaModal" onclick="fillSaidaEditForm('{{saida.id}}', '{{saida.produto_id}}', '{{saida.destino}}', '{{saida.data_saida}}', '{{saida.quantidade}}')">Editar</button>
+            <button type="button" class="btn btn-primary kanban-button" data-bs-toggle="modal" data-bs-target="#editSaidaModal" onclick="fillSaidaEditForm('{{saida.id}}', '{{saida.produto_id}}', '{{saida.destino}}', '{{saida.data_saida}}', '{{saida.quantidade}}', '{{saida.observacao}}')">Editar</button>
             <form action="{{ url_for('saidas.excluir_saida', saida_id=saida.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta saida?')">
                 <button type="submit" class="btn btn-danger kanban-button">Excluir</button>
             </form>
@@ -133,7 +143,7 @@
          {% if dia != None %}
         {% if dia.fechado == False %}
         <div class="botoes" style="display: flex; gap: 10px;">
-            <button type="button" class="btn btn-primary kanban-button" data-bs-toggle="modal" data-bs-target="#editEntradaModal" onclick="fillEntradaEditForm('{{entrada.id}}', '{{entrada.produto_id}}', '{{entrada.data_entrada}}', '{{entrada.quantidade}}')">Editar</button>
+            <button type="button" class="btn btn-primary kanban-button" data-bs-toggle="modal" data-bs-target="#editEntradaModal" onclick="fillEntradaEditForm('{{entrada.id}}', '{{entrada.produto_id}}', '{{entrada.data_entrada}}', '{{entrada.quantidade}}', '{{entrada.observacao}}')">Editar</button>
             <form action="{{ url_for('entradas.excluir_entrada', entrada_id=entrada.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta entrada?')">
                 <button type="submit" class="btn btn-danger kanban-button">Excluir</button>
             </form>
@@ -194,6 +204,11 @@
                 <label for="edit_quantidade_saida" class="form-label">Quantidade</label>
                 <input id="edit_quantidade_saida" name="edit_quantidade_saida" type="text" class="form-control">
             </div>
+
+             <div class="mb-3">
+              <label for="edit_observacao_saida" class="form-label">Observação</label>
+              <input id="edit_observacao_saida" name="edit_observacao_saida" type="text" class="form-control">
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
@@ -232,6 +247,11 @@
             <div class="mb-3">
                 <label for="edit_quantidade_entrada" class="form-label">Quantidade</label>
                 <input id="edit_quantidade_entrada" name="edit_quantidade_entrada" type="text" class="form-control">
+            </div>
+
+             <div class="mb-3">
+              <label for="edit_observacao_entrada" class="form-label">Observação</label>
+              <input id="edit_observacao_entrada" name="edit_observacao_entrada" type="text" class="form-control">
             </div>
         </div>
         <div class="modal-footer">
@@ -288,19 +308,21 @@
         document.getElementById('formData').submit();
     })
 
-    function fillSaidaEditForm(id, produto_id, destino, data, quantidade) {
+    function fillSaidaEditForm(id, produto_id, destino, data, quantidade, observacao) {
         document.getElementById("edit_produto_id_saida").value = produto_id;
         document.getElementById("edit_destino_saida").value = destino;
         document.getElementById("edit_data_saida").value = data;
         document.getElementById("edit_quantidade_saida").value = quantidade;
-
+        document.getElementById("edit_observacao_saida").value = observacao
+        
         document.getElementById("editSaidaForm").action = "{{ url_for('saidas.editar_saida', saida_id=0) }}".replace('0', id);
-    }
-
-    function fillEntradaEditForm(id, produto_id, data, quantidade) {
+      }
+      
+      function fillEntradaEditForm(id, produto_id, data, quantidade, observacao) {
         document.getElementById("edit_produto_id_entrada").value = produto_id;
         document.getElementById("edit_data_entrada").value = data;
         document.getElementById("edit_quantidade_entrada").value = quantidade;
+        document.getElementById("edit_observacao_entrada").value = observacao
 
         document.getElementById("editEntradaForm").action = "{{ url_for('entradas.editar_entrada', entrada_id=0) }}".replace('0', id);
     }

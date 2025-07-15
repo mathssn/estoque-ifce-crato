@@ -1,20 +1,27 @@
-from flask import Blueprint, redirect, flash, url_for, request
+from flask import Blueprint, redirect, flash, url_for, request, session
 from datetime import datetime
 
 from database.scripts.db import connect_db
 import database.models.saidas as saida
 from database.scripts.utils import check_saldo, recalculate_exits_balance
+from database.scripts.utils import login_required
 
 saidas = Blueprint('saidas', __name__)
 
 @saidas.route('/cadastro/saida/', methods=['POST'])
+@login_required
 def cadastro_saida():
+    if session['tipo'] not in ['Admin', 'Editor']:
+        flash('Permissão negada')
+        return redirect(url_for('movimentacoes_diarias'))
+    
     produto_id = request.form.get('produto_id')
     destino = request.form.get('destino')
     data = request.form.get('data_saida')
     quantidade = request.form.get('quantidade')
+    observacao = request.form.get('observacao')
 
-    nova_saida = saida.Saida(0, produto_id, destino, data, quantidade)
+    nova_saida = saida.Saida(0, produto_id, destino, data, quantidade, observacao, session['user_id'])
     
     if not validar_dados(nova_saida):
         flash('Insira dados válidos para o cadastro da saída.')
@@ -36,7 +43,12 @@ def cadastro_saida():
 
 
 @saidas.route('/editar/saida/<int:saida_id>/', methods=['POST'])
+@login_required
 def editar_saida(saida_id):
+    if session['tipo'] not in ['Admin', 'Editor']:
+        flash('Permissão negada')
+        return redirect(url_for('movimentacoes_diarias'))
+    
     try:
         with connect_db() as (conn, cursor):
             exit = saida.get(saida_id, cursor)
@@ -45,6 +57,7 @@ def editar_saida(saida_id):
             exit.destino = request.form.get('edit_destino_saida')
             exit.data_saida = request.form.get('edit_data_saida')
             exit.quantidade = request.form.get('edit_quantidade_saida')
+            exit.observacao = request.form.get('edit_observacao_saida')
             
             if not validar_dados(exit):
                 flash('Insira dados válidos para a edição da saída.')
@@ -55,8 +68,8 @@ def editar_saida(saida_id):
                 return redirect(url_for('movimentacoes_diarias', data=exit.data_saida))
 
             saida.update(saida_id, exit, cursor)
-    except:
-        flash(f'Falha ao atualizar saída')
+    except Exception as e:
+        flash(f'Falha ao atualizar saída: {e}')
     else:
         flash('Saída atualizada com sucesso!')
     
@@ -64,7 +77,12 @@ def editar_saida(saida_id):
 
 
 @saidas.route('/excluir/saida/<int:saida_id>/', methods=['POST'])
+@login_required
 def excluir_saida(saida_id):
+    if session['tipo'] not in ['Admin', 'Editor']:
+        flash('Permissão negada')
+        return redirect(url_for('movimentacoes_diarias'))
+    
     try:
         with connect_db() as (conn, cursor):
             exit = saida.get(saida_id, cursor)
@@ -76,8 +94,8 @@ def excluir_saida(saida_id):
             saida.delete(saida_id, cursor)
             
             recalculate_exits_balance(exit.data_saida, exit, cursor, delete=True)
-    except:
-        flash('Falha ao deletar saída')
+    except Exception as e:
+        flash(f'Falha ao deletar saída: {e}')
     else:
         flash('Saída deletada com sucesso!')
 

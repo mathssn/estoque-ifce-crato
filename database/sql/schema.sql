@@ -15,7 +15,10 @@ CREATE TABLE IF NOT EXISTS saidas (
     destino TEXT NOT NULL CHECK (destino IN ('Café da manhã', 'Lanche da manhã', 'Almoço', 'Lanche da tarde', 'Jantar', 'Ceia', 'Outros')),
     data_saida DATE NOT NULL,
     quantidade INT NOT NULL,
-    FOREIGN KEY(produto_id) REFERENCES produto(id)
+    observacao TEXT,
+    usuario_id INT NOT NULL,
+    FOREIGN KEY(produto_id) REFERENCES produto(id) ON DELETE CASCADE
+    FOREIGN KEY(usuario_id) REFERENCES usuario(id)
 );
 
 CREATE TABLE IF NOT EXISTS entradas (
@@ -23,7 +26,10 @@ CREATE TABLE IF NOT EXISTS entradas (
     produto_id INT NOT NULL,
     data_entrada DATE NOT NULL,
     quantidade INT NOT NULL,
-    FOREIGN KEY(produto_id) REFERENCES produto(id)
+    observacao TEXT,
+    usuario_id INT NOT NULL,
+    FOREIGN KEY(produto_id) REFERENCES produto(id) ON DELETE CASCADE
+    FOREIGN KEY(usuario_id) REFERENCES usuario(id)
 );
 
 CREATE TABLE IF NOT EXISTS saldo_diario (
@@ -40,3 +46,12 @@ CREATE TABLE IF NOT EXISTS dias_fechados (
     data DATE PRIMARY KEY,
     fechado BOOLEAN NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS usuario (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    tipo TEXT NOT NULL CHECK (tipo IN ('Admin', 'Editor', 'Leitor')),
+    email VARCHAR(100) NOT NULL,
+    senha VARCHAR(20) NOT NULL,
+    data_nascimento DATE NOT NULL
+)

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, flash, url_for, request
+from flask import Blueprint, render_template, redirect, flash, url_for, request, session
 from datetime import date
 
 from database.scripts.db import connect_db
@@ -6,11 +6,12 @@ import database.models.produto as prod
 import database.models.dias_fechados as dias
 import database.models.saldo_diario as saldos
 import database.models.entradas as entradas
+from database.scripts.utils import login_required
 
 produtos = Blueprint('produtos', __name__)
 
-
 @produtos.route('/produtos/')
+@login_required
 def produtos_lista():
     with connect_db() as (conn, cursor):
         produtos_list = prod.list_all(cursor)
@@ -18,7 +19,12 @@ def produtos_lista():
     return render_template('produtos.html', produtos=produtos_list)
 
 @produtos.route('/cadastro/produtos/', methods=['POST'])
+@login_required
 def cadastro_produtos():
+    if session['tipo'] not in ['Admin', 'Editor']:
+        flash('Permissão negada')
+        return redirect(url_for('produtos.produtos_lista'))
+    
     codigo = request.form.get('codigo')
     nome = request.form.get('nome')
     descricao = request.form.get('descricao')
@@ -47,17 +53,22 @@ def cadastro_produtos():
             saldo_diario = saldos.SaldoDiario(0, novo_produto.id, data_atual, 0, quantidade_atual, 0, quantidade_atual)
             saldos.create(saldo_diario, cursor)
                 
-            entrada = entradas.Entrada(0, novo_produto.id, data_atual, quantidade_atual)
+            entrada = entradas.Entrada(0, novo_produto.id, data_atual, quantidade_atual, 'Entrada inicial', session['user_id'])
             entradas.create(entrada, cursor)
-    except:
-        flash('Falha ao cadastrar produto')
+    except Exception as e:
+        flash(f'Falha ao cadastrar produto: {e}')
     else:
         flash('Produto cadastrado com sucesso!')
 
     return redirect(url_for('produtos.produtos_lista'))
 
 @produtos.route('/editar/produto/<int:produto_id>/', methods=['POST'])
+@login_required
 def editar_produto(produto_id):
+    if session['tipo'] not in ['Admin', 'Editor']:
+        flash('Permissão negada')
+        return redirect(url_for('produtos.produtos_lista'))
+    
     try:
         with connect_db() as (conn, cursor):
             produto = prod.get(produto_id, cursor)
@@ -72,8 +83,8 @@ def editar_produto(produto_id):
                 return redirect(url_for('produtos.produtos_lista'))
 
             prod.update(produto_id, produto, cursor)
-    except:
-        flash('Falha ao atualizar produto')
+    except Exception as e:
+        flash(f'Falha ao atualizar produto: {e}')
     else:
         flash('Produto atualizado com sucesso!')
 
@@ -81,12 +92,17 @@ def editar_produto(produto_id):
 
 
 @produtos.route('/excluir/produto/<int:produto_id>/', methods=['POST'])
+@login_required
 def excluir_produto(produto_id):
+    if session['tipo'] not in ['Admin', 'Editor']:
+        flash('Permissão negada')
+        return redirect(url_for('produtos.produtos_lista'))
+    
     try:
         with connect_db() as (conn, cursor):
             prod.delete(produto_id, cursor)
-    except:
-        flash('Falha ao deletar produto')
+    except Exception as e:
+        flash(f'Falha ao deletar produto: {e}')
     else:
         flash('Produto deletado com sucesso!')
 
