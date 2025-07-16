@@ -28,7 +28,7 @@ def create(dia: DiasFechados, cursor: sqlite3.Cursor):
 
 def list_all(cursor: sqlite3.Cursor):
     try:
-        cursor.execute('SELECT * FROM dias_fechados ORDER BY data DESC')
+        cursor.execute('SELECT * FROM dias_fechados ORDER BY data ASC')
     except sqlite3.Error:
         raise Exception('Erro ao listar dias')
     
@@ -69,3 +69,31 @@ def delete(data, cursor: sqlite3.Cursor):
     except sqlite3.Error:
         raise Exception('Erro ao deletar dia')
 
+def get_open_day(cursor: sqlite3.Cursor):
+    try:
+        cursor.execute('SELECT * FROM dias_fechados WHERE fechado = ?', (0,))
+    except:
+        raise Exception('Erro ao recuperar dia aberto')
+    
+    row = cursor.fetchone()
+    return DiasFechados(*row) if row else None
+
+
+def get_open_days(cursor: sqlite3.Cursor):
+    try:
+        cursor.execute('SELECT * FROM dias_fechados WHERE fechado = ? ORDER BY data ASC', (0,))
+    except:
+        raise Exception('Erro ao recuperar dias abertos')
+    
+    rows = cursor.fetchall()
+    return [DiasFechados(*row) for row in rows]
+
+
+def get_last_day(cursor: sqlite3.Cursor):
+    try:
+        cursor.execute('SELECT * FROM dias_fechados ORDER BY data DESC LIMIT 1')
+    except:
+        raise Exception('Não foi possivel recuperar o último dia')
+    
+    row = cursor.fetchone()
+    return DiasFechados(*row) if row else None

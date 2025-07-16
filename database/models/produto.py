@@ -25,6 +25,8 @@ def create(produto: Produto, cursor: sqlite3.Cursor):
             produto.get_tuple()
         )
         produto.id = cursor.lastrowid
+    except sqlite3.IntegrityError:
+        raise Exception('Não é possivel cadastrar produto com código já existente')
     except sqlite3.Error:
         raise Exception('Erro ao cadastrar produto')
 

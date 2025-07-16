@@ -91,6 +91,11 @@
                     <td>{{ produto.status }}</td>
                     <td>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProdutoModal" onclick="fillEditForm('{{produto.id}}', '{{produto.codigo}}', '{{produto.nome}}', '{{produto.descricao}}', '{{produto.unidade}}', '{{produto.quantidade_minima}}', '{{produto.status}}')">Editar</button>
+                        {% if session.get('tipo') == 'Admin' %}
+                        <form action="{{ url_for('produtos.excluir_produto', produto_id=produto.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este produto?')">
+                            <button type="submit" class="btn btn-danger">Excluir</button>
+                        </form>
+                        {% endif %}
                     </td>
             </tr>
             {% else %}

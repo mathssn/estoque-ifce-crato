@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, flash, url_for, session
-from datetime import datetime, timedelta, date
+from datetime import date
 
 from database.scripts.db import *
 from database.scripts.utils import *
@@ -23,8 +23,12 @@ app.register_blueprint(entradas)
 
 
 @app.route('/')
+@login_required
 def index():
-    return render_template('index.html')
+    with connect_db() as (conn, cursor):
+        dia = dias.get_open_day(cursor)
+
+    return render_template('index.html', dia=dia)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -87,6 +91,11 @@ def fechar_dia(data: str):
         flash('Permissão negada')
         return redirect(url_for('movimentacoes_diarias'))
 
+    cod = verificar_dias_abertos()
+    if cod == 1:
+        flash('Não há dia aberto')
+        return
+    
     try:
         with connect_db() as (conn, cursor):
             saldos_ = saldos.list_by_date(data, cursor)
@@ -99,8 +108,7 @@ def fechar_dia(data: str):
             dias.update(data, dia, cursor)
 
             # Soma 1 dia a data
-            new_date = datetime.strptime(data, '%Y-%m-%d').date() + timedelta(days=1)
-            new_date = new_date.isoformat() # retorna a string da data
+            new_date = somar_dia(data, '%Y-%m-%d')
 
             dia = dias.DiasFechados(new_date, False)
             dias.create(dia, cursor)
@@ -114,3 +122,25 @@ def fechar_dia(data: str):
         flash(f'Dia {data} fechado com sucesso')
         
     return redirect(url_for('movimentacoes_diarias', data=data))
+
+
+def verificar_dias_abertos() -> int:
+    try:
+        with connect_db() as (conn, cursor):
+            dias_ = dias.get_open_days(cursor)
+
+            if len(dias_) == 0:
+                mais_recente = dias.get_last_day(cursor)
+                if mais_recente == None:
+                        return 1
+            
+            elif len(dias_) > 1:
+                for dia in dias_[:-1]:
+                    dia.fechado = True
+                    dias.update(dia.data, dia, cursor)
+                return 2
+    except Exception as e:
+        flash(f'Não foi possivel verificar os dias: {e}')
+        return 3
+    
+    return 0

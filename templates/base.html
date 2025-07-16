@@ -19,33 +19,36 @@
         <li class="nav-item">
           <a class="nav-link active" aria-current="page" href="/">Home</a>
         </li>
+        {% if 'user_id' not in session %}
         <li class="nav-item">
           <a class="nav-link active" aria-current="page" href="/login">Login</a>
         </li>
+        {% else %}
         <li class="nav-item">
           <a class="nav-link active" aria-current="page" href="/logout">Logout</a>
         </li>
+        {% endif %}
       </ul>
     </div>
   </div>
 </nav>
 {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <ul id="messages" class="list-unstyled">
-                    {% for message in messages %}
-                        <li class="alert {{ 'alert-success' if 'sucesso' in message else 'alert-danger' }}">{{ message }}</li>
-                    {% endfor %}
-                </ul>
-                <script>
-                    setTimeout(function() {
-                        const messageBox = document.getElementById('messages');
-                        if (messageBox) {
-                            messageBox.style.display = 'none';
-                        }
-                    }, 5000); 
-                </script>
-            {% endif %}
-        {% endwith %}
+    {% if messages %}
+        <ul id="messages" class="list-unstyled">
+            {% for message in messages %}
+                <li class="alert {{ 'alert-success' if 'sucesso' in message else 'alert-danger' }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        <script>
+            setTimeout(function() {
+                const messageBox = document.getElementById('messages');
+                if (messageBox) {
+                    messageBox.style.display = 'none';
+                }
+            }, 5000); 
+        </script>
+    {% endif %}
+{% endwith %}
 
     {% block content %}
     {% endblock %}

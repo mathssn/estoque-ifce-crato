@@ -2,9 +2,15 @@
 
 {% block content %}
 
+{% if 'nome' in session.keys() %}
+    <h2>Olá {{ session.get('nome') }}</h2>
+{% endif %}
+
 <ul>
     <li><a href="{{ url_for('produtos.produtos_lista') }}">Produtos</a></li>
     <li><a href="{{ url_for('movimentacoes_diarias', data=None) }}">Movimentações diárias</a></li>
 </ul>
+
+<h2>Dia aberto: {{ dia.data }}</h2>
 
 {% endblock %}

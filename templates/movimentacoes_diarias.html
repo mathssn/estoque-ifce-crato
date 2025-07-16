@@ -3,6 +3,15 @@
 {% block content %}
 
 <h1>Movimentações - <form id="formData" action="/movimentacoes/diarias"><input type="date" id="date" name="date" value="{{ data }}"></form></h1>
+{% if dia != None %}
+  {% if dia.fechado == True %}
+    <h2 style="color: red;">Dia fechado</h2>
+    {% else %}
+    <h2 style="color: blue;">Dia aberto</h2>
+  {% endif %}
+{% else %}
+  <h2 style="color: gray">Dia futuro</h2>
+{% endif %}
 
 <div class="modal fade" id="addSaidaModal" tabindex="-1" aria-labelledby="addSaidaModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -283,13 +292,18 @@
         <tbody>
 
             {% for saldo in saldos_diarios %}
-                <tr>
-                    <td scope="row">{{ produtos[saldo.produto_id].codigo }}</td>
-                    <td>{{ produtos[saldo.produto_id].nome }}</td>
-                    <td>{{ saldo.quantidade_inicial }}</td>
-                    <td>{{ saldo.quantidade_entrada }}</td>
-                    <td>{{ saldo.quantidade_saida }}</td>
-                    <td>{{ saldo.quantidade_final }}</td>
+            {% if saldo.quantidade_final < produtos[saldo.produto_id].quantidade_minima %}
+              {% set color = 'red' %}
+            {% else %}
+              {% set color = 'black' %}
+            {% endif %}
+            <tr>
+                <td scope="row" style="color: {{ color }};">{{ produtos[saldo.produto_id].codigo }}</td>
+                <td style="color: {{ color }};">{{ produtos[saldo.produto_id].nome }}</td>
+                <td style="color: {{ color }};">{{ saldo.quantidade_inicial }}</td>
+                <td style="color: {{ color }};">{{ saldo.quantidade_entrada }}</td>
+                <td style="color: {{ color }};">{{ saldo.quantidade_saida }}</td>
+                <td style="color: {{ color }};">{{ saldo.quantidade_final }}</td>
             </tr>
             {% else %}
                 <p>Ainda não há lançamentos para esse dia</p>

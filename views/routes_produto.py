@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, flash, url_for, request, session
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from database.scripts.db import connect_db
 import database.models.produto as prod
@@ -44,11 +44,14 @@ def cadastro_produtos():
 
             # Cria a entrada inicial do produto
             data_atual = date.today().isoformat()
+            verificar_dia_aberto(data_atual, cursor)
 
             dia = dias.get(data_atual, cursor)
             if not dia:
                 dia = dias.DiasFechados(data_atual, False)
                 dias.create(dia, cursor)
+            elif dia.fechado:
+                raise Exception('Não é possivel cadastrar produtos nesse dia, pois o dia está fechado!')
 
             saldo_diario = saldos.SaldoDiario(0, novo_produto.id, data_atual, 0, quantidade_atual, 0, quantidade_atual)
             saldos.create(saldo_diario, cursor)
@@ -77,6 +80,7 @@ def editar_produto(produto_id):
             produto.descricao = request.form.get('edit_descricao')
             produto.unidade = request.form.get('edit_unidade')
             produto.quantidade_minima = request.form.get('edit_quantidade_minima')
+            produto.status = request.form.get('edit_status')
 
             if not validar_dados(produto, 0):
                 flash('Insira dados válidos')
@@ -123,4 +127,39 @@ def validar_dados(produto: prod.Produto, quantidade_atual):
     if codigo < 0 or quantidade_minima <= 0 or quantidade_atual < 0:
         return False
     
+    if produto.status not in ['Disponivel', 'Não disponivel']:
+        return False
+    
     return True
+
+def verificar_dia_aberto(data: str, cursor):
+    mais_recente = dias.get_open_day(cursor)
+    if mais_recente == None:
+        return
+    
+    data_mais_recente = datetime.strptime(mais_recente.data, '%Y-%m-%d').date()
+    data = datetime.strptime(data, '%Y-%m-%d').date()
+    saldos_diarios = saldos.list_by_date(data_mais_recente.isoformat(), cursor)
+
+    if data_mais_recente == data:
+        return
+
+    if data_mais_recente < data:
+        mais_recente.fechado = True
+        dias.update(mais_recente.data, mais_recente, cursor)
+
+        while data_mais_recente < data:
+            data_mais_recente += timedelta(days=1)
+
+            for saldo in saldos_diarios:
+                s = saldos.SaldoDiario(0, saldo.produto_id, data_mais_recente.isoformat(), saldo.quantidade_final, 0, 0, saldo.quantidade_final)
+                saldos.create(s, cursor)
+            
+            if data_mais_recente == data:
+                fechado = False
+            else:
+                fechado = True
+            dia = dias.DiasFechados(data_mais_recente.isoformat(), fechado)
+            dias.create(dia, cursor)
+
+  
