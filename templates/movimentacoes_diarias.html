@@ -3,15 +3,6 @@
 {% block content %}
 
 <h1>Movimentações - <form id="formData" action="/movimentacoes/diarias"><input type="date" id="date" name="date" value="{{ data }}"></form></h1>
-{% if dia != None %}
-  {% if dia.fechado == True %}
-    <h2 style="color: red;">Dia fechado</h2>
-    {% else %}
-    <h2 style="color: blue;">Dia aberto</h2>
-  {% endif %}
-{% else %}
-  <h2 style="color: gray">Dia futuro</h2>
-{% endif %}
 
 <div class="modal fade" id="addSaidaModal" tabindex="-1" aria-labelledby="addSaidaModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -44,17 +35,12 @@
             
             <div class="mb-3">
                 <label for="data_saida" class="form-label">Data</label>
-                <input id="data_saida" name="data_saida" type="date" class="form-control" value="{{ data }}">
+                <input id="data_saida" name="data_saida" type="date" class="form-control" value="{{ data }}" required>
             </div>
             
             <div class="mb-3">
                 <label for="quantidade" class="form-label">Quantidade</label>
-                <input id="quantidade" name="quantidade" type="text" class="form-control">
-            </div>
-
-            <div class="mb-3">
-              <label for="observacao" class="form-label">Observação</label>
-              <input id="observacao" name="observacao" type="text" class="form-control">
+                <input id="quantidade" name="quantidade" type="number" class="form-control" required>
             </div>
         </div>
         <div class="modal-footer">
@@ -88,17 +74,12 @@
             
             <div class="mb-3">
                 <label for="data_entrada" class="form-label">Data</label>
-                <input id="data_entrada" name="data_entrada" type="date" class="form-control" value="{{ data }}">
+                <input id="data_entrada" name="data_entrada" type="date" class="form-control" value="{{ data }}" required>
             </div>
             
             <div class="mb-3">
                 <label for="quantidade" class="form-label">Quantidade</label>
-                <input id="quantidade" name="quantidade" type="text" class="form-control">
-            </div>
-
-             <div class="mb-3">
-              <label for="observacao" class="form-label">Observação</label>
-              <input id="observacao" name="observacao" type="text" class="form-control">
+                <input id="quantidade" name="quantidade" type="number" class="form-control" required>
             </div>
         </div>
         <div class="modal-footer">
@@ -110,69 +91,50 @@
   </div>
 </div>
 
-
-<div class="kanban-board">
-{% for refeicao in saidas.keys() %}
-  <div class="kanban-column">
-    <h5 class="mb-3">{{ refeicao }}</h5>
+<ul class="list-group"  style="width: 500px;">
+  {% for refeicao in saidas.keys() %}
     {% for saida in saidas[refeicao] %}
-    <div class="card kanban-card p-2">
-      <div class="card-body" style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
-        <p class="card-text" style="flex: 1; margin: 0;">{{ produtos[saida.produto_id].nome }} - {{ saida.quantidade }}{{ produtos[saida.produto_id].unidade }}</p>
-        {% if dia != None %}
-          {% if dia.fechado == False %}
-        <div class="botoes" style="display: flex; gap: 10px;">
-            <button type="button" class="btn btn-primary kanban-button" data-bs-toggle="modal" data-bs-target="#editSaidaModal" onclick="fillSaidaEditForm('{{saida.id}}', '{{saida.produto_id}}', '{{saida.destino}}', '{{saida.data_saida}}', '{{saida.quantidade}}', '{{saida.observacao}}')">Editar</button>
-            <form action="{{ url_for('saidas.excluir_saida', saida_id=saida.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta saida?')">
-                <button type="submit" class="btn btn-danger kanban-button">Excluir</button>
-            </form>
-        </div>
-        {% endif %}
-      {% endif %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span>{{ produtos[saida.produto_id].nome }} - {{ saida.quantidade }}{{ produtos[saida.produto_id].unidade }} - {{ refeicao }}</span>
+      {% if dia != None %}
+      {% if dia.fechado == False %}
+      <div style="display: flex; gap: 10px;">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editSaidaModal" onclick="fillSaidaEditForm('{{saida.id}}', '{{saida.produto_id}}', '{{saida.destino}}', '{{saida.data_saida}}', '{{saida.quantidade}}')">Editar</button>
+        <form action="{{ url_for('saidas.excluir_saida', saida_id=saida.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta saida?')">
+          <button type="submit" class="btn btn-danger">Excluir</button>
+        </form>
       </div>
-    </div>
+      {% endif %}
+      {% endif %}
+    </li>
     {% endfor %}
-    {% if dia != None %}
-        {% if dia.fechado == False %}
-    <button class="card kanban-card p-2" type="button" data-bs-toggle="modal" data-bs-target="#addSaidaModal" onclick="document.getElementById('destino').value = '{{ refeicao }}'">
-      <div class="card-body">
-        <p class="card-text">Adicionar saida</p>
+  {% endfor %}
+</ul>
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSaidaModal" style="margin: 10px;">
+  Cadastrar nova saida
+</button>
+
+<ul class="list-group">
+  {% for entrada in entradas %}
+    <li class="list-group-item d-flex justify-content-between align-items-center mb-2" style="width: 500px;">
+      <span>{{ produtos[entrada.produto_id].nome }} - {{ entrada.quantidade }}{{ produtos[entrada.produto_id].unidade }}</span>
+      {% if dia != None %}
+      {% if dia.fechado == False %}
+      <div style="display: flex; gap: 10px;">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editEntradaModal" onclick="fillEntradaEditForm('{{entrada.id}}', '{{entrada.produto_id}}', '{{entrada.data_saida}}', '{{entrada.quantidade}}')">Editar</button>
+        <form action="{{ url_for('entradas.excluir_entrada', entrada_id=entrada.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta entrada?')">
+          <button type="submit" class="btn btn-danger">Excluir</button>
+        </form>
       </div>
-    </button>
-    {% endif %}
       {% endif %}
-  </div>
-{% endfor %}
-<div class="kanban-column">
-    <h5 class="mb-3">Entradas</h5>
-    {% for entrada in entradas %}
-    <div class="card kanban-card p-2">
-      <div class="card-body" style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
-        <p class="card-text" style="flex: 1; margin: 0;">{{ produtos[entrada.produto_id].nome }} - {{ entrada.quantidade }}{{ produtos[entrada.produto_id].unidade }}</p>
-         {% if dia != None %}
-        {% if dia.fechado == False %}
-        <div class="botoes" style="display: flex; gap: 10px;">
-            <button type="button" class="btn btn-primary kanban-button" data-bs-toggle="modal" data-bs-target="#editEntradaModal" onclick="fillEntradaEditForm('{{entrada.id}}', '{{entrada.produto_id}}', '{{entrada.data_entrada}}', '{{entrada.quantidade}}', '{{entrada.observacao}}')">Editar</button>
-            <form action="{{ url_for('entradas.excluir_entrada', entrada_id=entrada.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta entrada?')">
-                <button type="submit" class="btn btn-danger kanban-button">Excluir</button>
-            </form>
-        </div>
-        {% endif %}
       {% endif %}
-      </div>
-    </div>
-    {% endfor %}
-     {% if dia != None %}
-        {% if dia.fechado == False %}
-    <button class="card kanban-card p-2" type="button" data-bs-toggle="modal" data-bs-target="#addEntradaModal">
-      <div class="card-body">
-        <p class="card-text">Adicionar entrada</p>
-      </div>
-    </button>
-    {% endif %}
-      {% endif %}
-</div>
-</div>
+    </li>
+  {% endfor %}
+</ul>
+
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEntradaModal" style="margin: 10px;">
+  Cadastrar nova entrada
+</button>
 
 
 <div class="modal fade" id="editSaidaModal" tabindex="-1" aria-labelledby="editSaidaModalLabel" aria-hidden="true">
@@ -191,7 +153,7 @@
                         <option value="{{ produto_id }}">{{ produto.nome }}</option>
                     {% else %}
                     {% endfor %}
-                </select>
+                </select readonly>
             </div>
 
             <div class="mb-3">
@@ -211,12 +173,7 @@
             
             <div class="mb-3">
                 <label for="edit_quantidade_saida" class="form-label">Quantidade</label>
-                <input id="edit_quantidade_saida" name="edit_quantidade_saida" type="text" class="form-control">
-            </div>
-
-             <div class="mb-3">
-              <label for="edit_observacao_saida" class="form-label">Observação</label>
-              <input id="edit_observacao_saida" name="edit_observacao_saida" type="text" class="form-control">
+                <input id="edit_quantidade_saida" name="edit_quantidade_saida" type="number" class="form-control" required>
             </div>
         </div>
         <div class="modal-footer">
@@ -245,7 +202,7 @@
                         <option value="{{ produto_id }}">{{ produto.nome }}</option>
                     {% else %}
                     {% endfor %}
-                </select>
+                </select readonly>
             </div>
             
             <div class="mb-3">
@@ -255,12 +212,7 @@
             
             <div class="mb-3">
                 <label for="edit_quantidade_entrada" class="form-label">Quantidade</label>
-                <input id="edit_quantidade_entrada" name="edit_quantidade_entrada" type="text" class="form-control">
-            </div>
-
-             <div class="mb-3">
-              <label for="edit_observacao_entrada" class="form-label">Observação</label>
-              <input id="edit_observacao_entrada" name="edit_observacao_entrada" type="text" class="form-control">
+                <input id="edit_quantidade_entrada" name="edit_quantidade_entrada" type="number" class="form-control" required>
             </div>
         </div>
         <div class="modal-footer">
@@ -292,18 +244,13 @@
         <tbody>
 
             {% for saldo in saldos_diarios %}
-            {% if saldo.quantidade_final < produtos[saldo.produto_id].quantidade_minima %}
-              {% set color = 'red' %}
-            {% else %}
-              {% set color = 'black' %}
-            {% endif %}
-            <tr>
-                <td scope="row" style="color: {{ color }};">{{ produtos[saldo.produto_id].codigo }}</td>
-                <td style="color: {{ color }};">{{ produtos[saldo.produto_id].nome }}</td>
-                <td style="color: {{ color }};">{{ saldo.quantidade_inicial }}</td>
-                <td style="color: {{ color }};">{{ saldo.quantidade_entrada }}</td>
-                <td style="color: {{ color }};">{{ saldo.quantidade_saida }}</td>
-                <td style="color: {{ color }};">{{ saldo.quantidade_final }}</td>
+                <tr>
+                    <td scope="row">{{ produtos[saldo.produto_id].codigo }}</td>
+                    <td>{{ produtos[saldo.produto_id].nome }}</td>
+                    <td>{{ saldo.quantidade_inicial }}</td>
+                    <td>{{ saldo.quantidade_entrada }}</td>
+                    <td>{{ saldo.quantidade_saida }}</td>
+                    <td>{{ saldo.quantidade_final }}</td>
             </tr>
             {% else %}
                 <p>Ainda não há lançamentos para esse dia</p>
@@ -322,21 +269,19 @@
         document.getElementById('formData').submit();
     })
 
-    function fillSaidaEditForm(id, produto_id, destino, data, quantidade, observacao) {
+    function fillSaidaEditForm(id, produto_id, destino, data, quantidade) {
         document.getElementById("edit_produto_id_saida").value = produto_id;
         document.getElementById("edit_destino_saida").value = destino;
         document.getElementById("edit_data_saida").value = data;
         document.getElementById("edit_quantidade_saida").value = quantidade;
-        document.getElementById("edit_observacao_saida").value = observacao
-        
+
         document.getElementById("editSaidaForm").action = "{{ url_for('saidas.editar_saida', saida_id=0) }}".replace('0', id);
-      }
-      
-      function fillEntradaEditForm(id, produto_id, data, quantidade, observacao) {
+    }
+
+    function fillEntradaEditForm(id, produto_id, data, quantidade) {
         document.getElementById("edit_produto_id_entrada").value = produto_id;
         document.getElementById("edit_data_entrada").value = data;
         document.getElementById("edit_quantidade_entrada").value = quantidade;
-        document.getElementById("edit_observacao_entrada").value = observacao
 
         document.getElementById("editEntradaForm").action = "{{ url_for('entradas.editar_entrada', entrada_id=0) }}".replace('0', id);
     }
