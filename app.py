@@ -8,6 +8,7 @@ import database.models.saidas as saida
 import database.models.entradas as entrada
 import database.models.saldo_diario as saldos
 import database.models.dias_fechados as dias
+import database.models.usuario as user
 
 from views.routes_produto import produtos
 from views.routes_saida import saidas
@@ -82,7 +83,25 @@ def movimentacoes_diarias(data=None):
 
         dia = dias.get(data, cursor)
 
-    return render_template('movimentacoes_diarias.html', saidas=saidas_diarias, data=data, produtos=produtos_dict, entradas=entradas_diarias, saldos_diarios=saldos_diarios, dia=dia)
+        usuarios = {}
+        for entrie in entradas_diarias:
+            if entrie.usuario_id not in usuarios.keys():
+                usuario = user.get(entrie.usuario_id, cursor)
+                if usuario:
+                    usuarios[usuario.id] = usuario.nome
+                else:
+                    usuarios[entrie.usuario_id] = 'Desconhecido'
+        
+        for destino, exits in saidas_diarias.items():
+            for exit in exits:
+                if exit.usuario_id not in usuarios.keys():
+                    usuario = user.get(exit.usuario_id, cursor)
+                    if usuario:
+                        usuarios[usuario.id] = usuario.nome
+                    else:
+                        usuarios[entrie.usuario_id] = 'Desconhecido'
+
+    return render_template('movimentacoes_diarias.html', saidas=saidas_diarias, data=data, produtos=produtos_dict, entradas=entradas_diarias, saldos_diarios=saldos_diarios, dia=dia, usuarios=usuarios)
 
 @app.route('/fechar/dia/<data>')
 @login_required

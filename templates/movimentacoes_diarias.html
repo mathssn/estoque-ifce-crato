@@ -2,7 +2,164 @@
 
 {% block content %}
 
-<h1>Movimentações - <form id="formData" action="/movimentacoes/diarias"><input type="date" id="date" name="date" value="{{ data }}"></form></h1>
+<h1 style="display: flex;">Movimentações - <form id="formData" action="/movimentacoes/diarias"><input type="date" id="date" name="date" value="{{ data }}"></form></h1>
+
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="saidas-tab" data-bs-toggle="tab" data-bs-target="#saidas-tab-pane" type="button" role="tab" aria-controls="saidas-tab-pane" aria-selected="true">Saidas</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="entradas-tab" data-bs-toggle="tab" data-bs-target="#entradas-tab-pane" type="button" role="tab" aria-controls="entradas-tab-pane" aria-selected="false">Entradas</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="saldo-tab" data-bs-toggle="tab" data-bs-target="#saldo-tab-pane" type="button" role="tab" aria-controls="saldo-tab-pane" aria-selected="false">Saldo diário</button>
+  </li>
+</ul>
+
+
+<div class="tab-content" id="myTabContent">
+  
+<div class="tab-pane fade show active" id="saidas-tab-pane" role="tabpanel" aria-labelledby="saidas-tab" tabindex="0">
+<div class="container mt-5">
+    <div class="table-responsive">
+
+        <table class="table table-striped table-bordered table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th scope="col">Código</th>
+                <th scope="col">Nome</th>
+                <th scope="col">Refeição</th>
+                <th scope="col">Unidade</th>
+                <th scope="col">Quantidade</th>
+                <th scope="col">Observação</th>
+                <th scope="col">Responsavel</th>
+                <th scope="col">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+          {% for refeicao in saidas.keys() %}
+            {% for saida in saidas[refeicao] %}
+                <tr>
+                  <td>{{ produtos[saida.produto_id].codigo }}</td>
+                  <td>{{ produtos[saida.produto_id].nome }}</td>
+                  <td>{{ refeicao }}</td>
+                  <td>{{ produtos[saida.produto_id].unidade }}</td>
+                  <td>{{ saida.quantidade }}</td>
+                  <td>{{ saida.observacao }}</td>
+                  <td>{{ usuarios[saida.usuario_id] }}</td>
+                  <td>
+                    {% if dia != None %}
+                      {% if dia.fechado == False %}
+                      <div style="display: flex; gap: 10px;">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editSaidaModal" onclick="fillSaidaEditForm('{{saida.id}}', '{{saida.produto_id}}', '{{saida.destino}}', '{{saida.data_saida}}', '{{saida.quantidade}}')">Editar</button>
+                        <form action="{{ url_for('saidas.excluir_saida', saida_id=saida.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta saida?')">
+                          <button type="submit" class="btn btn-danger">Excluir</button>
+                        </form>
+                      </div>
+                      {% endif %}
+                    {% endif %}
+                  </td>
+                </tr>
+            {% endfor %}
+          {% endfor %}
+        </tbody>
+</table>
+</div>
+</div>
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSaidaModal" style="margin: 10px;">
+  Cadastrar nova saida
+</button>
+</div>
+
+<div class="tab-pane fade" id="entradas-tab-pane" role="tabpanel" aria-labelledby="entradas-tab" tabindex="0">
+
+<div class="container mt-5">
+    <div class="table-responsive">
+
+        <table class="table table-striped table-bordered table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th scope="col">Código</th>
+                <th scope="col">Nome</th>
+                <th scope="col">Unidade</th>
+                <th scope="col">Quantidade</th>
+                <th scope="col">Observação</th>
+                <th scope="col">Responsavel</th>
+                <th scope="col">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+          {% for entrada in entradas %}
+          <tr>
+              <td>{{ produtos[entrada.produto_id].codigo }}</td>
+              <td>{{ produtos[entrada.produto_id].nome }}</td>
+              <td>{{ produtos[entrada.produto_id].unidade }}</td>
+              <td>{{ entrada.quantidade }}</td>
+              <td>{{ entrada.observacao }}</td>
+              <td>{{ usuarios[entrada.usuario_id] }}</td>
+              <td>
+                {% if dia != None %}
+                  {% if dia.fechado == False %}
+                  <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editEntradaModal" onclick="fillEntradaEditForm('{{entrada.id}}', '{{entrada.produto_id}}', '{{entrada.data_entrada}}', '{{entrada.quantidade}}')">Editar</button>
+                    <form action="{{ url_for('entradas.excluir_entrada', entrada_id=entrada.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta entrada?')">
+                      <button type="submit" class="btn btn-danger">Excluir</button>
+                    </form>
+                  </div>
+                  {% endif %}
+                  {% endif %}
+              </td>
+          {% endfor %}
+          </tbody>
+</table>
+</div>
+</div>
+
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEntradaModal" style="margin: 10px;">
+  Cadastrar nova entrada
+</button>
+</div>
+<div class="tab-pane fade" id="saldo-tab-pane" role="tabpanel" aria-labelledby="saldo-tab" tabindex="0">
+
+<div class="container mt-5">
+    <div class="table-responsive">
+
+        <table class="table table-striped table-bordered table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th scope="col">Código</th>
+                <th scope="col">Produto</th>
+                <th scope="col">Quantidade inicial</th>
+                <th scope="col">Quantidade entrada</th>
+                <th scope="col">Quantidade saida</th>
+                <th scope="col">Quantidade final</th>
+            </tr>
+        </thead>
+        
+        <tbody>
+
+            {% for saldo in saldos_diarios %}
+                <tr>
+                    <td scope="row">{{ produtos[saldo.produto_id].codigo }}</td>
+                    <td>{{ produtos[saldo.produto_id].nome }}</td>
+                    <td>{{ saldo.quantidade_inicial }}</td>
+                    <td>{{ saldo.quantidade_entrada }}</td>
+                    <td>{{ saldo.quantidade_saida }}</td>
+                    <td>{{ saldo.quantidade_final }}</td>
+            </tr>
+            {% else %}
+                <p>Ainda não há lançamentos para esse dia</p>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+
+<a type="button" class="btn btn-primary" href="{{ url_for('fechar_dia', data=data) }}">Fechar dia</a>
+</div>
+</div>
+
+
 
 <div class="modal fade" id="addSaidaModal" tabindex="-1" aria-labelledby="addSaidaModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -41,6 +198,11 @@
             <div class="mb-3">
                 <label for="quantidade" class="form-label">Quantidade</label>
                 <input id="quantidade" name="quantidade" type="number" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="observacao" class="form-label">Observação</label>
+                <input id="observacao" name="observacao" type="text" class="form-control">
             </div>
         </div>
         <div class="modal-footer">
@@ -81,6 +243,12 @@
                 <label for="quantidade" class="form-label">Quantidade</label>
                 <input id="quantidade" name="quantidade" type="number" class="form-control" required>
             </div>
+
+            
+            <div class="mb-3">
+                <label for="observacao" class="form-label">Observação</label>
+                <input id="observacao" name="observacao" type="text" class="form-control">
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
@@ -90,51 +258,6 @@
     </div>
   </div>
 </div>
-
-<ul class="list-group"  style="width: 500px;">
-  {% for refeicao in saidas.keys() %}
-    {% for saida in saidas[refeicao] %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-      <span>{{ produtos[saida.produto_id].nome }} - {{ saida.quantidade }}{{ produtos[saida.produto_id].unidade }} - {{ refeicao }}</span>
-      {% if dia != None %}
-      {% if dia.fechado == False %}
-      <div style="display: flex; gap: 10px;">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editSaidaModal" onclick="fillSaidaEditForm('{{saida.id}}', '{{saida.produto_id}}', '{{saida.destino}}', '{{saida.data_saida}}', '{{saida.quantidade}}')">Editar</button>
-        <form action="{{ url_for('saidas.excluir_saida', saida_id=saida.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta saida?')">
-          <button type="submit" class="btn btn-danger">Excluir</button>
-        </form>
-      </div>
-      {% endif %}
-      {% endif %}
-    </li>
-    {% endfor %}
-  {% endfor %}
-</ul>
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSaidaModal" style="margin: 10px;">
-  Cadastrar nova saida
-</button>
-
-<ul class="list-group">
-  {% for entrada in entradas %}
-    <li class="list-group-item d-flex justify-content-between align-items-center mb-2" style="width: 500px;">
-      <span>{{ produtos[entrada.produto_id].nome }} - {{ entrada.quantidade }}{{ produtos[entrada.produto_id].unidade }}</span>
-      {% if dia != None %}
-      {% if dia.fechado == False %}
-      <div style="display: flex; gap: 10px;">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editEntradaModal" onclick="fillEntradaEditForm('{{entrada.id}}', '{{entrada.produto_id}}', '{{entrada.data_saida}}', '{{entrada.quantidade}}')">Editar</button>
-        <form action="{{ url_for('entradas.excluir_entrada', entrada_id=entrada.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta entrada?')">
-          <button type="submit" class="btn btn-danger">Excluir</button>
-        </form>
-      </div>
-      {% endif %}
-      {% endif %}
-    </li>
-  {% endfor %}
-</ul>
-
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEntradaModal" style="margin: 10px;">
-  Cadastrar nova entrada
-</button>
 
 
 <div class="modal fade" id="editSaidaModal" tabindex="-1" aria-labelledby="editSaidaModalLabel" aria-hidden="true">
@@ -175,6 +298,11 @@
                 <label for="edit_quantidade_saida" class="form-label">Quantidade</label>
                 <input id="edit_quantidade_saida" name="edit_quantidade_saida" type="number" class="form-control" required>
             </div>
+
+            <div class="mb-3">
+                <label for="edit_observacao_saida" class="form-label">Observação</label>
+                <input id="edit_observacao_saida" name="edit_observacao_saida" type="text" class="form-control">
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
@@ -214,6 +342,11 @@
                 <label for="edit_quantidade_entrada" class="form-label">Quantidade</label>
                 <input id="edit_quantidade_entrada" name="edit_quantidade_entrada" type="number" class="form-control" required>
             </div>
+
+            <div class="mb-3">
+                <label for="edit_observacao_entrada" class="form-label">Observação</label>
+                <input id="edit_observacao_entrada" name="edit_observacao_entrada" type="text" class="form-control">
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
@@ -223,44 +356,6 @@
     </div>
   </div>
 </div>
-
-<h1>Saldo diário</h1>
-
-<div class="container mt-5">
-    <div class="table-responsive">
-
-        <table class="table table-striped table-bordered table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th scope="col">Código</th>
-                <th scope="col">Produto</th>
-                <th scope="col">Quantidade inicial</th>
-                <th scope="col">Quantidade entrada</th>
-                <th scope="col">Quantidade saida</th>
-                <th scope="col">Quantidade final</th>
-            </tr>
-        </thead>
-        
-        <tbody>
-
-            {% for saldo in saldos_diarios %}
-                <tr>
-                    <td scope="row">{{ produtos[saldo.produto_id].codigo }}</td>
-                    <td>{{ produtos[saldo.produto_id].nome }}</td>
-                    <td>{{ saldo.quantidade_inicial }}</td>
-                    <td>{{ saldo.quantidade_entrada }}</td>
-                    <td>{{ saldo.quantidade_saida }}</td>
-                    <td>{{ saldo.quantidade_final }}</td>
-            </tr>
-            {% else %}
-                <p>Ainda não há lançamentos para esse dia</p>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-</div>
-
-<a type="button" class="btn btn-primary" href="{{ url_for('fechar_dia', data=data) }}">Fechar dia</a>
 
 <script>
     const campoData = document.getElementById('date');
@@ -285,6 +380,8 @@
 
         document.getElementById("editEntradaForm").action = "{{ url_for('entradas.editar_entrada', entrada_id=0) }}".replace('0', id);
     }
+
+
 </script>
 
 {% endblock %}
