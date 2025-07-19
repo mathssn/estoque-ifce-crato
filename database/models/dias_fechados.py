@@ -1,4 +1,5 @@
 import sqlite3
+import mysql.connector as mysql
 from dataclasses import dataclass
 
 
@@ -14,19 +15,19 @@ class DiasFechados:
         return f"Dia {self.data} {'fechado' if self.fechado else 'aberto'}"
 
 
-def create(dia: DiasFechados, cursor: sqlite3.Cursor):
+def create(dia: DiasFechados, cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute(
             '''INSERT INTO dias_fechados (
                 data, fechado
-            ) VALUES (?, ?)''',
+            ) VALUES (%s, %s)''',
             dia.get_tuple()
         )
     except sqlite3.Error:
         raise Exception('Erro ao cadastrar dia')
 
 
-def list_all(cursor: sqlite3.Cursor):
+def list_all(cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute('SELECT * FROM dias_fechados ORDER BY data ASC')
     except sqlite3.Error:
@@ -38,9 +39,9 @@ def list_all(cursor: sqlite3.Cursor):
     return dias
 
 
-def get(data, cursor: sqlite3.Cursor):
+def get(data, cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('SELECT * FROM dias_fechados WHERE data = ?', (data,))
+        cursor.execute('SELECT * FROM dias_fechados WHERE data = %s', (data,))
     except sqlite3.Error:
         raise Exception('Erro ao recuperar dia')
     
@@ -51,27 +52,27 @@ def get(data, cursor: sqlite3.Cursor):
     return None
 
 
-def update(data, dia: DiasFechados, cursor: sqlite3.Cursor):
+def update(data, dia: DiasFechados, cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute(
             '''UPDATE dias_fechados SET 
-                fechado = ?
-               WHERE data = ?''',
+                fechado = %s
+               WHERE data = %s''',
             (dia.fechado, data)
         )
     except sqlite3.Error:
         raise Exception('Erro ao atualizar dia')
 
 
-def delete(data, cursor: sqlite3.Cursor):
+def delete(data, cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('DELETE FROM dias_fechados WHERE data = ?', (data,))
+        cursor.execute('DELETE FROM dias_fechados WHERE data = %s', (data,))
     except sqlite3.Error:
         raise Exception('Erro ao deletar dia')
 
-def get_open_day(cursor: sqlite3.Cursor):
+def get_open_day(cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('SELECT * FROM dias_fechados WHERE fechado = ?', (0,))
+        cursor.execute('SELECT * FROM dias_fechados WHERE fechado = %s', (0,))
     except:
         raise Exception('Erro ao recuperar dia aberto')
     
@@ -79,9 +80,9 @@ def get_open_day(cursor: sqlite3.Cursor):
     return DiasFechados(*row) if row else None
 
 
-def get_open_days(cursor: sqlite3.Cursor):
+def get_open_days(cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('SELECT * FROM dias_fechados WHERE fechado = ? ORDER BY data ASC', (0,))
+        cursor.execute('SELECT * FROM dias_fechados WHERE fechado = %s ORDER BY data ASC', (0,))
     except:
         raise Exception('Erro ao recuperar dias abertos')
     
@@ -89,7 +90,7 @@ def get_open_days(cursor: sqlite3.Cursor):
     return [DiasFechados(*row) for row in rows]
 
 
-def get_last_day(cursor: sqlite3.Cursor):
+def get_last_day(cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute('SELECT * FROM dias_fechados ORDER BY data DESC LIMIT 1')
     except:

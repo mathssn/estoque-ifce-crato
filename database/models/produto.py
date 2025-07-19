@@ -1,4 +1,5 @@
 import sqlite3
+import mysql.connector as mysql
 from dataclasses import dataclass
 
 
@@ -18,10 +19,10 @@ class Produto:
     def __str__(self):
         return self.nome
 
-def create(produto: Produto, cursor: sqlite3.Cursor):
+def create(produto: Produto, cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute(
-            'INSERT INTO produto (codigo, nome, descricao, unidade, quantidade_minima, status) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO produto (codigo, nome, descricao, unidade, quantidade_minima, status) VALUES (%s, %s, %s, %s, %s, %s)',
             produto.get_tuple()
         )
         produto.id = cursor.lastrowid
@@ -31,7 +32,7 @@ def create(produto: Produto, cursor: sqlite3.Cursor):
         raise Exception('Erro ao cadastrar produto')
 
 
-def list_all(cursor: sqlite3.Cursor):
+def list_all(cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute('SELECT * FROM produto ORDER BY codigo')
     except sqlite3.Error:
@@ -46,9 +47,9 @@ def list_all(cursor: sqlite3.Cursor):
     return produtos
 
 
-def get(_id, cursor: sqlite3.Cursor):
+def get(_id, cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('SELECT * FROM produto WHERE id = ?', (_id,))
+        cursor.execute('SELECT * FROM produto WHERE id = %s', (_id,))
     except sqlite3.Error:
         raise Exception('Erro ao recuperar produto')
     row = cursor.fetchone()
@@ -56,10 +57,10 @@ def get(_id, cursor: sqlite3.Cursor):
     return Produto(*row) if row else None
 
 
-def get_by_cod(cod, cursor: sqlite3.Cursor):
+def get_by_cod(cod, cursor: mysql.connection.MySQLCursor):
     
     try:
-        cursor.execute('SELECT * FROM produto WHERE codigo = ?', (cod,))
+        cursor.execute('SELECT * FROM produto WHERE codigo = %s', (cod,))
     except sqlite3.Error:
         raise Exception('Erro ao recuperar produto')
     row = cursor.fetchone()
@@ -67,20 +68,20 @@ def get_by_cod(cod, cursor: sqlite3.Cursor):
     return Produto(*row) if row else None
 
 
-def update(_id, produto: Produto, cursor: sqlite3.Cursor):
+def update(_id, produto: Produto, cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute(
-            'UPDATE produto SET codigo = ?, nome = ?, descricao = ?, unidade = ?, quantidade_minima = ?, status = ? WHERE id = ?',
+            'UPDATE produto SET codigo = %s, nome = %s, descricao = %s, unidade = %s, quantidade_minima = %s, status = %s WHERE id = %s',
             produto.get_tuple() + (_id,)
         )
     except sqlite3.Error:
         raise Exception('Erro ao atualizar produto')
 
 
-def delete(_id, cursor: sqlite3.Cursor):
+def delete(_id, cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute(
-            'DELETE FROM produto WHERE id = ?',
+            'DELETE FROM produto WHERE id = %s',
             (_id,)
         )
     except sqlite3.Error:

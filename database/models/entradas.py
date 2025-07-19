@@ -1,4 +1,5 @@
 import sqlite3
+import mysql.connector as mysql
 from dataclasses import dataclass
 from database.scripts.utils import recalculate_entries_balance
 
@@ -19,12 +20,12 @@ class Entrada:
         return f"Entrada de Produto {self.produto_id} em {self.data_entrada} pelo usuário: {self.usuario_id}"
 
 
-def create(entrada: Entrada, cursor: sqlite3.Cursor):
+def create(entrada: Entrada, cursor: mysql.connection.MySQLCursor):
     try:
         recalculate_entries_balance(entrada.data_entrada, entrada, cursor)
         
         cursor.execute(
-            'INSERT INTO entradas (produto_id, data_entrada, quantidade, observacao, usuario_id) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO entradas (produto_id, data_entrada, quantidade, observacao, usuario_id) VALUES (%s, %s, %s, %s, %s)',
             entrada.get_tuple()
         )
         entrada.id = cursor.lastrowid
@@ -32,7 +33,7 @@ def create(entrada: Entrada, cursor: sqlite3.Cursor):
         raise Exception('Erro ao cadastrar entrada')
 
 
-def list_all(cursor: sqlite3.Cursor):
+def list_all(cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute('SELECT * FROM entradas ORDER BY data_entrada DESC')
     except sqlite3.Error:
@@ -43,9 +44,9 @@ def list_all(cursor: sqlite3.Cursor):
     return entradas
 
 
-def get(_id, cursor: sqlite3.Cursor):
+def get(_id, cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('SELECT * FROM entradas WHERE id = ?', (_id,))
+        cursor.execute('SELECT * FROM entradas WHERE id = %s', (_id,))
     except sqlite3.Error:
         raise Exception('Erro ao recuperar entrada')
 
@@ -53,28 +54,28 @@ def get(_id, cursor: sqlite3.Cursor):
     return Entrada(*row) if row else None
 
 
-def update(_id, entrada: Entrada, cursor: sqlite3.Cursor):
+def update(_id, entrada: Entrada, cursor: mysql.connection.MySQLCursor):
     try:
         recalculate_entries_balance(entrada.data_entrada, entrada, cursor, True)
         
         cursor.execute(
-            'UPDATE entradas SET produto_id = ?, data_entrada = ?, quantidade = ?, observacao = ?, usuario_id = ? WHERE id = ?',
+            'UPDATE entradas SET produto_id = %s, data_entrada = %s, quantidade = %s, observacao = %s, usuario_id = %s WHERE id = %s',
             entrada.get_tuple() + (_id,)
         )
     except sqlite3.Error:
         raise Exception('Erro ao atualizar entrada')
 
 
-def delete(_id, cursor: sqlite3.Cursor):
+def delete(_id, cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('DELETE FROM entradas WHERE id = ?', (_id,))
+        cursor.execute('DELETE FROM entradas WHERE id = %s', (_id,))
     except sqlite3.Error:
         raise Exception('Erro ao deletar entrada')
 
 
-def list_by_date(date: str, cursor: sqlite3.Cursor):
+def list_by_date(date: str, cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('SELECT * FROM entradas WHERE data_entrada = ?', (date,))
+        cursor.execute('SELECT * FROM entradas WHERE data_entrada = %s', (date,))
         rows = cursor.fetchall()
     except sqlite3.Error:
         raise Exception('Erro ao listar entradas por data')
@@ -82,17 +83,16 @@ def list_by_date(date: str, cursor: sqlite3.Cursor):
     return [Entrada(*row) for row in rows]
 
 
-def list_by_month(month: str, year: str, cursor: sqlite3.Cursor):
-    if len(month) == 1:
-        month = '0' + month
+def list_by_month(month: str, year: str, cursor: mysql.connection.MySQLCursor):
 
     try:
-        cursor.execute(
-            "SELECT * FROM entradas WHERE strftime('%Y', data_entrada) = ? AND strftime('%m', data_entrada) = ?",
-            (year, month)
-        )
+        query = """
+            SELECT * FROM entradas
+            WHERE YEAR(data_entrada) = %s AND MONTH(data_entrada) = %s
+        """
+        cursor.execute(query, (year, month))
         rows = cursor.fetchall()
-    except sqlite3.Error:
-        raise Exception('Erro ao listar entradas por mês')
+    except mysql.connection.Error as e:
+        raise Exception(f'Erro ao listar entradas por mês')
 
     return [Entrada(*row) for row in rows]

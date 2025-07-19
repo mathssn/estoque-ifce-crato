@@ -14,7 +14,7 @@ from views.routes_produto import produtos
 from views.routes_saida import saidas
 from views.routes_entradas import entradas
 
-create_database()
+create_database('estoque_ifce')
 
 app = Flask(__name__)
 app.secret_key = 'teste123'

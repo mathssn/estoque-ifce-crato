@@ -1,4 +1,5 @@
 import sqlite3
+import mysql.connector as mysql
 from dataclasses import dataclass
 
 @dataclass
@@ -16,12 +17,12 @@ class Usuario:
     def __str__(self):
         return f"{self.nome} ({self.tipo})"
 
-def create(usuario: Usuario, cursor: sqlite3.Cursor):
+def create(usuario: Usuario, cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute(
             '''
             INSERT INTO usuario (nome, tipo, email, senha, data_nascimento)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s)
             ''',
             usuario.get_tuple()
         )
@@ -29,7 +30,7 @@ def create(usuario: Usuario, cursor: sqlite3.Cursor):
     except sqlite3.Error:
         raise Exception('Erro ao cadastrar usuário')
 
-def list_all(cursor: sqlite3.Cursor):
+def list_all(cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute('SELECT * FROM usuario ORDER BY nome')
     except sqlite3.Error:
@@ -43,38 +44,38 @@ def list_all(cursor: sqlite3.Cursor):
 
     return usuarios
 
-def get(_id: int, cursor: sqlite3.Cursor):
+def get(_id: int, cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('SELECT * FROM usuario WHERE id = ?', (_id,))
+        cursor.execute('SELECT * FROM usuario WHERE id = %s', (_id,))
     except sqlite3.Error:
         raise Exception('Erro ao recuperar usuário')
     
     row = cursor.fetchone()
     return Usuario(*row) if row else None
 
-def get_by_email(email: str, cursor: sqlite3.Cursor):
+def get_by_email(email: str, cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('SELECT * FROM usuario WHERE email = ?', (email,))
+        cursor.execute('SELECT * FROM usuario WHERE email = %s', (email,))
     except sqlite3.Error:
         raise Exception('Erro ao recuperar usuário por e-mail')
     
     row = cursor.fetchone()
     return Usuario(*row) if row else None
 
-def update(_id: int, usuario: Usuario, cursor: sqlite3.Cursor):
+def update(_id: int, usuario: Usuario, cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute(
             '''
-            UPDATE usuario SET nome = ?, tipo = ?, email = ?, senha = ?, data_nascimento = ?
-            WHERE id = ?
+            UPDATE usuario SET nome = %s, tipo = %s, email = %s, senha = %s, data_nascimento = %s
+            WHERE id = %s
             ''',
             usuario.get_tuple() + (_id,)
         )
     except sqlite3.Error:
         raise Exception('Erro ao atualizar usuário')
 
-def delete(_id: int, cursor: sqlite3.Cursor):
+def delete(_id: int, cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('DELETE FROM usuario WHERE id = ?', (_id,))
+        cursor.execute('DELETE FROM usuario WHERE id = %s', (_id,))
     except sqlite3.Error:
         raise Exception('Erro ao deletar usuário')

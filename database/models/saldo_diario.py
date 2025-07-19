@@ -1,4 +1,5 @@
 import sqlite3
+import mysql.connector as mysql
 from dataclasses import dataclass
 
 
@@ -24,14 +25,14 @@ class SaldoDiario:
         )
 
 
-def create(saldo: SaldoDiario, cursor: sqlite3.Cursor):
+def create(saldo: SaldoDiario, cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute(
             '''INSERT INTO saldo_diario (
                 produto_id, data, quantidade_inicial,
                 quantidade_entrada, quantidade_saida,
                 quantidade_final
-            ) VALUES (?, ?, ?, ?, ?, ?)''',
+            ) VALUES (%s, %s, %s, %s, %s, %s)''',
             saldo.get_tuple()
         )
         saldo.id = cursor.lastrowid
@@ -39,7 +40,7 @@ def create(saldo: SaldoDiario, cursor: sqlite3.Cursor):
         raise Exception('Erro ao cadastrar saldo diário')
 
 
-def list_all(cursor: sqlite3.Cursor):
+def list_all(cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute('SELECT * FROM saldo_diario ORDER BY data DESC')
         rows = cursor.fetchall()
@@ -49,9 +50,9 @@ def list_all(cursor: sqlite3.Cursor):
     return [SaldoDiario(*row) for row in rows]
 
 
-def get(_id, cursor: sqlite3.Cursor):
+def get(_id, cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('SELECT * FROM saldo_diario WHERE id = ?', (_id,))
+        cursor.execute('SELECT * FROM saldo_diario WHERE id = %s', (_id,))
         row = cursor.fetchone()
     except sqlite3.Error:
         raise Exception('Erro ao recuperar saldo diário')
@@ -59,30 +60,30 @@ def get(_id, cursor: sqlite3.Cursor):
     return SaldoDiario(*row) if row else None
 
 
-def update(_id, saldo: SaldoDiario, cursor: sqlite3.Cursor):
+def update(_id, saldo: SaldoDiario, cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute(
             '''UPDATE saldo_diario SET 
-                produto_id = ?, data = ?, quantidade_inicial = ?, 
-                quantidade_entrada = ?, quantidade_saida = ?, 
-                quantidade_final = ?
-               WHERE id = ?''',
+                produto_id = %s, data = %s, quantidade_inicial = %s, 
+                quantidade_entrada = %s, quantidade_saida = %s, 
+                quantidade_final = %s
+               WHERE id = %s''',
             saldo.get_tuple() + (_id,)
         )
     except sqlite3.Error:
         raise Exception('Erro ao atualizar saldo diário')
 
 
-def delete(_id, cursor: sqlite3.Cursor):
+def delete(_id, cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('DELETE FROM saldo_diario WHERE id = ?', (_id,))
+        cursor.execute('DELETE FROM saldo_diario WHERE id = %s', (_id,))
     except sqlite3.Error:
         raise Exception('Erro ao deletar saldo diário')
 
 
-def list_by_date(date: str, cursor: sqlite3.Cursor):
+def list_by_date(date: str, cursor: mysql.connection.MySQLCursor):
     try:
-        cursor.execute('SELECT * FROM saldo_diario WHERE data = ?', (date,))
+        cursor.execute('SELECT * FROM saldo_diario WHERE data = %s', (date,))
         rows = cursor.fetchall()
     except sqlite3.Error:
         raise Exception('Erro ao listar saldo diário por data')
@@ -90,15 +91,15 @@ def list_by_date(date: str, cursor: sqlite3.Cursor):
     return [SaldoDiario(*row) for row in rows]
 
 
-def list_by_month(month: str, year: str, cursor: sqlite3.Cursor):
+def list_by_month(month: str, year: str, cursor: mysql.connection.MySQLCursor):
     if len(month) == 1:
         month = '0' + month
 
     try:
         cursor.execute(
             '''SELECT * FROM saldo_diario 
-               WHERE strftime('%Y', data) = ? 
-               AND strftime('%m', data) = ?''',
+               WHERE strftime('%Y', data) = %s 
+               AND strftime('%m', data) = %s''',
             (year, month)
         )
         rows = cursor.fetchall()
@@ -108,10 +109,10 @@ def list_by_month(month: str, year: str, cursor: sqlite3.Cursor):
     return [SaldoDiario(*row) for row in rows]
 
 
-def get_by_date_and_product(date: str, produto_id: int, cursor: sqlite3.Cursor):
+def get_by_date_and_product(date: str, produto_id: int, cursor: mysql.connection.MySQLCursor):
     try:
         cursor.execute(
-            'SELECT * FROM saldo_diario WHERE data = ? AND produto_id = ?',
+            'SELECT * FROM saldo_diario WHERE data = %s AND produto_id = %s',
             (date, produto_id)
         )
         row = cursor.fetchone()

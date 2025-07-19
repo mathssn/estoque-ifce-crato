@@ -1,10 +1,10 @@
-import sqlite3
+import mysql.connector as mysql
 from flask import session, flash, redirect
 from functools import wraps
 from datetime import datetime, timedelta
 
 
-def recalculate_exits_balance(data, saida, cursor: sqlite3.Cursor, update=False, delete=False):
+def recalculate_exits_balance(data, saida, cursor: mysql.connection.MySQLCursor, update=False, delete=False):
     import database.models.saldo_diario as saldos
     import database.models.saidas as saidas
 
@@ -35,7 +35,7 @@ def recalculate_exits_balance(data, saida, cursor: sqlite3.Cursor, update=False,
     saldos.update(saldo.id, saldo, cursor)
 
 
-def recalculate_entries_balance(data, entrada, cursor: sqlite3.Cursor, update=False, delete=False):
+def recalculate_entries_balance(data, entrada, cursor: mysql.connection.MySQLCursor, update=False, delete=False):
     import database.models.saldo_diario as saldos
     import database.models.entradas as entradas
 
@@ -66,7 +66,7 @@ def recalculate_entries_balance(data, entrada, cursor: sqlite3.Cursor, update=Fa
     saldos.update(saldo.id, saldo, cursor)
 
 
-def check_saldo(data, cursor: sqlite3.Cursor):
+def check_saldo(data, cursor: mysql.connection.MySQLCursor):
     import database.models.dias_fechados as dias
 
     dia = dias.get(data, cursor)
@@ -78,7 +78,7 @@ def check_saldo(data, cursor: sqlite3.Cursor):
     return True
 
 
-def check_login(email: str, senha: str, cursor: sqlite3.Cursor):
+def check_login(email: str, senha: str, cursor: mysql.connection.MySQLCursor):
     import database.models.usuario as user
 
     usuario = user.get_by_email(email, cursor)
